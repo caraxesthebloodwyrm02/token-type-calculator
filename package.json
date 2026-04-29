@@ -1,0 +1,8 @@
+{
+  "name": "token-type-calculator",
+  "version": "1.0.0",
+  "description": "Mangrove token type calculator (static HTML tool)",
+  "scripts": {
+    "test": "node tests/smoke.js"
+  }
+}
