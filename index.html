@@ -18,6 +18,11 @@
     --gate-on:      #ffd700;
     --gate-off:     #3a3a5c;
     --bio-signal:   #f0a050;
+    --morsmordre:   #8b0000;
+    --legilimens:   #6a0dad;
+    --imperius:     #4b0082;
+    --protego:      #c0c0ff;
+    --freedom-signal: #ffa07a;
 
     --buildup:      #00ff88;
     --silence:      #2a2a4a;
@@ -36,12 +41,13 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    background: var(--bg);
+    background: var(--dynamic-bg, var(--bg));
     color: var(--text);
     font-family: 'Courier New', monospace;
     font-size: 13px;
     min-height: 100vh;
     padding: 24px;
+    transition: background var(--air-speed, 2.4s) ease;
   }
 
   /* ── Header ── */
@@ -76,12 +82,16 @@
   }
 
   .panel {
-    background: var(--surface);
+    background: var(--dynamic-surface, var(--surface));
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 16px;
     position: relative;
     overflow: hidden;
+    transition: background var(--air-speed, 2.4s) ease, box-shadow var(--air-speed, 2.4s) ease;
+  }
+  .panel:hover {
+    box-shadow: 0 0 var(--air-glow, 8px) var(--dynamic-surface, transparent);
   }
 
   .panel-title {
@@ -512,6 +522,38 @@
         <div class="token-weight" id="w-bio-signal">0.00</div>
         <div class="token-toggle"></div>
       </div>
+      <!-- Dark side tokens -->
+      <div class="token-card" data-type="morsmordre" style="--card-color: var(--morsmordre)" onclick="toggleToken(this)">
+        <div class="token-dot"></div>
+        <div class="token-label">MORSMORDRE</div>
+        <div class="token-weight" id="w-morsmordre">0.00</div>
+        <div class="token-toggle"></div>
+      </div>
+      <div class="token-card" data-type="legilimens" style="--card-color: var(--legilimens)" onclick="toggleToken(this)">
+        <div class="token-dot"></div>
+        <div class="token-label">LEGILIMENS</div>
+        <div class="token-weight" id="w-legilimens">0.00</div>
+        <div class="token-toggle"></div>
+      </div>
+      <div class="token-card" data-type="imperius" style="--card-color: var(--imperius)" onclick="toggleToken(this)">
+        <div class="token-dot"></div>
+        <div class="token-label">IMPERIUS</div>
+        <div class="token-weight" id="w-imperius">0.00</div>
+        <div class="token-toggle"></div>
+      </div>
+      <!-- Protection / freedom tokens -->
+      <div class="token-card" data-type="protego" style="--card-color: var(--protego)" onclick="toggleToken(this)">
+        <div class="token-dot"></div>
+        <div class="token-label">PROTEGO</div>
+        <div class="token-weight" id="w-protego">0.00</div>
+        <div class="token-toggle"></div>
+      </div>
+      <div class="token-card" data-type="freedom-signal" style="--card-color: var(--freedom-signal)" onclick="toggleToken(this)">
+        <div class="token-dot"></div>
+        <div class="token-label">FREEDOM·SIGNAL</div>
+        <div class="token-weight" id="w-freedom-signal">0.00</div>
+        <div class="token-toggle"></div>
+      </div>
     </div>
 
     <div style="margin-top:18px">
@@ -818,53 +860,10 @@
   </div>
 </footer>
 
+<script src="dashboard_constants.generated.js"></script>
 <script>
-const TOKEN_COLORS = {
-  transistor: '#00d4ff',
-  decorated:  '#39ff14',
-  ambient:    '#bf5fff',
-  anomaly:    '#ff3a3a',
-  'gate-on':  '#ffd700',
-  'gate-off': '#3a3a5c',
-  'bio-signal': '#f0a050'
-};
-
-const TOKEN_WEIGHTS = {
-  transistor: 1.0,
-  decorated:  0.72,
-  ambient:    0.45,
-  anomaly:    0.15,
-  'gate-on':  0.90,
-  'gate-off': 0.10,
-  'bio-signal': 0.85
-};
-
-const TOKEN_LABELS = {
-  transistor: 'TRANSISTOR',
-  decorated:  'DECORATED_VAR',
-  ambient:    'AMBIENT',
-  anomaly:    'ANOMALY',
-  'gate-on':  'GATE·ARMED',
-  'gate-off': 'GATE·UNARMED',
-  'bio-signal': 'BIO_SIGNAL'
-};
-
-const ZONE_COLORS = { buildup: '#00ff88', silence: '#2a2a4a', drop: '#ff6b1a' };
-const STRENGTH_MULTIPLIER = 2.0;
-
-const SCENARIO_LIBRARY = {
-  "RELIEF": { pressure: 0.3, clarity: 1.0, movement: "DRIFT", dominant_type: "TRANSISTOR", is_no_take: false },
-  "NOT": { pressure: 1.0, clarity: 0.0, movement: "TURBULENT", dominant_type: "BIO_SIGNAL", is_no_take: true },
-  "VIBE_CHECK": { pressure: 0.2, clarity: 0.8, movement: "DRIFT", dominant_type: "EXPRESSIVE", is_no_take: false },
-  "AUTHORITY_ASSERTION": { pressure: 0.8, clarity: 0.6, movement: "GUST", dominant_type: "BOLD", is_no_take: false },
-  "INTENTIONAL": { pressure: 0.2, clarity: 0.8, movement: "DRIFT", dominant_type: "TRANSISTOR", is_no_take: false },
-  "GENERATE_MEMORY": { pressure: 0.8, clarity: 0.5, movement: "TURBULENT", dominant_type: "BIO_SIGNAL", is_no_take: false },
-  "MOONY": { pressure: 1.0, clarity: 0.0, movement: "TURBULENT", dominant_type: "BIO_SIGNAL", is_no_take: true },
-  "TONKS": { pressure: 1.0, clarity: 1.0, movement: "GUST", dominant_type: "BIO_SIGNAL", is_no_take: false },
-  "PRONGS": { pressure: 0.3, clarity: 0.8, movement: "DRIFT", dominant_type: "AMBIENT", is_no_take: false },
-  "PADFOOT": { pressure: 0.7, clarity: 0.6, movement: "GUST", dominant_type: "GATE_ON", is_no_take: false },
-  "WORMTAIL": { pressure: 0.4, clarity: 0.1, movement: "TURBULENT", dominant_type: "GATE_OFF", is_no_take: true },
-};
+// Parity note: imperius COMPROMISED gate logic and freedom-signal override exist in
+// calculator.py / API only — not replicated in this browser engine (AUTHOR.md).
 
 let activeTokens = new Set(['transistor']);
 let currentZone = 'buildup';
@@ -1029,6 +1028,28 @@ function compute() {
     is_no_take: isNoTake
   };
   const searchResult = semanticSearch(currentFingerprint);
+
+  // DYNAMIC GESTURES (Air Matrix UI Mapping)
+  const rootStyle = document.documentElement.style;
+  rootStyle.setProperty('--air-pressure', pressure.toFixed(3));
+  rootStyle.setProperty('--air-clarity', clarity.toFixed(3));
+  
+  let airSpeed = '2.4s';
+  if (movement === 'TURBULENT') airSpeed = '0.5s';
+  else if (movement === 'GUST') airSpeed = '1.2s';
+  else if (movement === 'STILL') airSpeed = '8s';
+  rootStyle.setProperty('--air-speed', airSpeed);
+
+  const glowRadius = 8 + (pressure * 24); // 8px to 32px
+  rootStyle.setProperty('--air-glow', glowRadius.toFixed(1) + 'px');
+  
+  // Background breathing colors via color-mix
+  const pressPct = Math.round(pressure * 15); // up to 15% mix
+  const clrPct = Math.round(clarity * 20); // up to 20% mix
+  
+  // Mix baseline with dominant color
+  rootStyle.setProperty('--dynamic-bg', `color-mix(in srgb, var(--bg) ${100 - pressPct}%, ${domColor})`);
+  rootStyle.setProperty('--dynamic-surface', `color-mix(in srgb, var(--surface) ${100 - clrPct}%, ${domColor})`);
 
   // Update outputs
   document.getElementById('out-type').textContent = TOKEN_LABELS[dominant];

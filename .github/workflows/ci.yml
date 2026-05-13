@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Pin Python 3.14
+        run: uv python install 3.14
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Pytest
+        run: uv run pytest
+
+      - name: Regenerate dashboard constants
+        run: uv run python scripts/sync_dashboard_constants.py
+
+      - name: Dashboard artifact matches canonical_library.py
+        run: git diff --exit-code dashboard_constants.generated.js

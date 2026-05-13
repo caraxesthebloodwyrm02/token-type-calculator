@@ -1,0 +1,17 @@
+[project]
+name = "token-type-calculator"
+version = "0.1.0"
+description = "Token signal calculator with browser dashboard, FastAPI API, and Rich CLI"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.136.1",
+    "requests>=2.32",
+    "rich>=15.0.0",
+    "uvicorn>=0.46.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]
