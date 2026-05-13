@@ -46,6 +46,8 @@ Browser dashboard: open `index.html` directly in a browser (no server needed; re
 
 The **Merge Gate (Every PR)** criteria live only in [`.github/pull_request_template.md`](.github/pull_request_template.md) (single source of truth). Opening a PR pre-fills those checkboxes on GitHub. Before marking a PR ready, merging, or recommending merge, satisfy **every** item there — same bar for humans and agents.
 
+Full lifecycle (branching, pre-PR gates, review, merge, post-merge): [PR_OPERATIONS_PLAYBOOK.md](PR_OPERATIONS_PLAYBOOK.md).
+
 ---
 
 ## Architecture
