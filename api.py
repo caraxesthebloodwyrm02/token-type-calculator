@@ -1,17 +1,23 @@
 import os
 import time
 from contextlib import asynccontextmanager
-from typing import Literal
+from typing import Any, Literal
 
-from fastapi import FastAPI, HTTPException, Header, Depends
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from calculator import TOKEN_WEIGHTS, TokenTypeCalculator, SCENARIO_LIBRARY
-from design import MOONY_SCORE_THRESHOLD, TONKS_SCORE_THRESHOLD, PRONGS_PRESENCE_THRESHOLD, SSSEVERUS_CLARITY_GAP, PHOENIX_CORE_SCORE
+from calculator import SCENARIO_LIBRARY, TOKEN_WEIGHTS, TokenTypeCalculator
+from contracts import OperatorState
+from design import (
+    MOONY_SCORE_THRESHOLD,
+    PHOENIX_CORE_SCORE,
+    PRONGS_PRESENCE_THRESHOLD,
+    SSSEVERUS_CLARITY_GAP,
+    TONKS_SCORE_THRESHOLD,
+)
 from scenarios import run_moony_scenario
-from storage import init_db, save_request, read_trajectory
-
+from storage import init_db, read_trajectory, save_request
 
 ZoneName = Literal["buildup", "silence", "drop"]
 
@@ -25,7 +31,7 @@ class ComputeRequest(BaseModel):
     drift: float = 0.08
     engagement_cost: float = 0.0
     service_value: float = 0.0
-    operator_state: str | None = None
+    operator_state: OperatorState | None = None
 
     @field_validator("active_tokens")
     @classmethod
@@ -103,10 +109,11 @@ def verify_api_key(x_api_key: str | None = Header(None)) -> str | None:
     return x_api_key
 
 
-def _apply_request(calc: "TokenTypeCalculator", payload: ComputeRequest) -> None:
+def _apply_request(calc: TokenTypeCalculator, payload: ComputeRequest) -> None:
     """Apply ComputeRequest fields onto a fresh TokenTypeCalculator instance."""
     calc.active_tokens = set(payload.active_tokens)
     calc.zone = payload.zone
+    calc.sync_zone_from_step = False
     calc.params["intensity"] = payload.intensity
     calc.params["momentum"] = payload.momentum
     calc.params["score"] = payload.score
@@ -122,9 +129,15 @@ def narrate_shift(result: dict, closest_scenario: str | None = None) -> str:
 
     parts = []
     if result.get("patronus_state"):
-        parts.append("The serpent charges through the cold. Engagement and service are both full — the NO-TAKE boundary has been inverted. Expecto Patronum.")
+        parts.append(
+            "The serpent charges through the cold. Engagement and service are both full — "
+            "the NO-TAKE boundary has been inverted. Expecto Patronum."
+        )
     elif result["is_no_take"]:
-        parts.append("The boundary has been reached: engagement is high but service is absent. The NO-TAKE rule is absolute.")
+        parts.append(
+            "The boundary has been reached: engagement is high but service is absent. "
+            "The NO-TAKE rule is absolute."
+        )
     else:
         parts.append(f"The exchange is {boundary.lower()}.")
 
@@ -272,10 +285,12 @@ def compute(payload: ComputeRequest) -> dict:
             name: calc.calculate_similarity(fp, scenario).similarity
             for name, scenario in SCENARIO_LIBRARY.items()
         }
+        moony_high = scores.get("MOONY", 0.0) > MOONY_SCORE_THRESHOLD
+        tonks_high = scores.get("TONKS", 0.0) > TONKS_SCORE_THRESHOLD
         result["marauder_trajectory"] = {
             "all_scores": {k: round(v, 4) for k, v in scores.items()},
             "trajectory": trajectory,
-            "black_scope_active": scores.get("MOONY", 0.0) > MOONY_SCORE_THRESHOLD and scores.get("TONKS", 0.0) > TONKS_SCORE_THRESHOLD
+            "black_scope_active": moony_high and tonks_high,
         }
 
     # Add narrative story
@@ -320,7 +335,7 @@ def compare(payload: CompareRequest) -> dict:
 
 
 @app.get("/scenarios/moony", response_model=ComputeResponse, dependencies=[Depends(verify_api_key)])
-def moony_scenario() -> Dict[str, Any]:
+def moony_scenario() -> dict[str, Any]:
     calc = run_moony_scenario()
     moony_params = {
         "active_tokens": list(calc.active_tokens),

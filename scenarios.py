@@ -34,6 +34,7 @@ def run_moony_scenario() -> TokenTypeCalculator:
     calc.toggle_token("gate-off")
     calc.toggle_token("transistor")
     calc.zone = "silence"
+    calc.sync_zone_from_step = False
     calc.params["engagement_cost"] = 1.0
     calc.params["service_value"] = 0.0
     calc.params["drift"] = 0.3

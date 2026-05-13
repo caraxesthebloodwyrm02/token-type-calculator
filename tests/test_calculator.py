@@ -1,5 +1,5 @@
-import pytest
 from calculator import TokenTypeCalculator, query_tui_anchor, run_tui_queries
+
 
 def test_initial_state():
     """Verify the default state has TRANSISTOR and starts in buildup zone."""
@@ -57,6 +57,44 @@ def test_silence_zone_anomaly():
     assert calc.zone == 'silence'
     assert state['is_anomaly'] is True
     assert state['strength'] == 0.0  # Silence zone multiplier is 0.0
+
+
+def test_zone_explicit_overrides_step_for_silence():
+    """Presets/API paths: zone is authoritative when sync_zone_from_step is False."""
+    calc = TokenTypeCalculator()
+    calc.params["step"] = 43  # would map to buildup if syncing from step
+    calc.zone = "silence"
+    calc.sync_zone_from_step = False
+
+    state = calc.compute()
+    assert calc.zone == "silence"
+    assert state["is_anomaly"] is True
+    assert state["strength"] == 0.0
+
+
+def test_zone_explicit_overrides_step_for_drop():
+    calc = TokenTypeCalculator()
+    calc.params["step"] = 43  # buildup step range, but zone says drop
+    calc.zone = "drop"
+    calc.sync_zone_from_step = False
+    calc.params["intensity"] = 1.0
+    calc.params["momentum"] = 1.0
+    calc.params["score"] = 1.0
+
+    state = calc.compute()
+    assert calc.zone == "drop"
+    assert state["strength"] > 0.0
+
+
+def test_run_moony_scenario_preserves_silence_zone():
+    from scenarios import run_moony_scenario
+
+    calc = run_moony_scenario()
+    assert calc.zone == "silence"
+    assert calc.sync_zone_from_step is False
+    state = calc.compute()
+    assert calc.zone == "silence"
+    assert state["strength"] == 0.0
 
 def test_bio_signal_integration():
     """Verify the new BIO_SIGNAL token acts as a high-weight structural token."""

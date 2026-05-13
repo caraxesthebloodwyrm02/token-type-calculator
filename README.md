@@ -1,84 +1,107 @@
 # Token Type Calculator
 
-A zero-dependency, single-file dashboard for composing and inspecting harness token signals — visualizing how type, weight, zone, and gate state combine into a dominant category, barter exchange rate, and stability score.
+Signal calculator for typed token exchanges: a **standalone browser dashboard**, **FastAPI** API, **Rich CLI**, SQLite trajectory storage, and a **batch HTTP client**. Token weights, colors, zones, and fingerprint anchors live in `canonical_library.py` (single source of truth for Python and for emitted browser constants).
 
 ---
 
-## Origin
+## Requirements
 
-Built from a conclusion reached on 2026-04-22 during parallel Cursor and Claude Code sessions:
-
-> Value of tokens shipped ≠ value of tokens received.  
-> High-value sends, low-value returns.  
-> The deep-purple AMBIENT gradient is the visual proof.
-
-Token weights encode that asymmetry directly: TRANSISTOR (1.00) → DECORATED_VAR (0.72) → AMBIENT (0.45) → ANOMALY (0.15).
+- **Python** ≥ 3.14  
+- **[uv](https://docs.astral.sh/uv/)** for environments and commands  
 
 ---
 
-## Features
-
-- **Seven token types**: TRANSISTOR, DECORATED_VAR, AMBIENT, ANOMALY, GATE·ARMED, GATE·UNARMED, BIO_SIGNAL — toggled via card clicks
-- **Three zones**: Buildup, Silence, Drop — each applying a different intensity multiplier
-- **Four layers**: Foundation, Probe, Integration, Custom
-- **Transformation output panel**: Effective Type, Gate State, Fired Value, Anomaly flag, Signal Strength, Zone
-- **Barter Exchange widget**: live exchange rate between the dominant and a target token, degraded by anomaly drift
-- **5×5 Interaction Matrix**: pairwise composition scores for all active tokens, highlighted for currently active pairs
-- **Live Stats**: Active Types, Total Weight, Combination string, Transform Rate, Stability (HIGH / MED / LOW)
-- **Footer Glossary**: inline reference for all token types, zones, and barter semantics
-
----
-
-## Directory structure
-
-| Path | Role |
-|---|---|
-| `index.html` | Primary standalone browser dashboard |
-| `calculator.py` | Core Python calculator model and TUI anchor queries |
-| `design.py` | Semantic dataclasses for tokens, exchange, air, audio, visuals, and fingerprints |
-| `api.py` | FastAPI wrapper around calculator operations |
-| `main.py` | Rich CLI scenario runner |
-| `tests/` | Python and browser smoke tests |
-| `DESIGN.md` | Design contract and implementation map |
-| `ROUTINE.md` | Five-day API/data operations routine |
-| `AZKABAN.html` | API guide artifact |
-| `canvas.png` | Visual/canvas input artifact |
-| `tui.txt` | TUI session/output capture |
-
----
-
-## How to use
-
-Open `index.html` directly in any evergreen browser (Chrome, Edge, Firefox ≥ 2023, Safari 17+). No server, no install, no build step.
+## Install and test
 
 ```bash
-xdg-open index.html     # Linux
-open index.html          # macOS
+uv sync
+uv run pytest
 ```
 
-> **Browser note**: the dashboard uses `color-mix(in srgb, …)` for matrix cell blending. This requires Chrome/Edge 111+, Firefox 113+, or Safari 16.2+. Older browsers will show plain background colors but all calculations and text remain correct.
+Lint (optional, dev group):
+
+```bash
+uv run ruff check .
+```
 
 ---
 
-## Token Glossary
+## Generated dashboard constants
 
-| Token | Color | Weight | Description |
-|-------|-------|--------|-------------|
-| **TRANSISTOR** | `#00d4ff` cyan | 1.00 | Binary gate signal. Value `1` = armed & fired; `0` = fired unarmed. `armedAt` must be set before `firesAtStep` or anomaly is raised. Highest authority weight. |
-| **DECORATED_VAR** | `#39ff14` green | 0.72 | Environment variable injection at a designated `triggerStep`. Sets runtime context (e.g. `HARNESS_EVENT_PROGRESS`). Always fires regardless of gate state. |
-| **AMBIENT** | `#bf5fff` deep purple | 0.45 | Background passive signal. Emitted continuously across zone steps. Used for telemetry, heartbeat, and baseline drift measurement. No gate dependency. |
-| **ANOMALY** | `#ff3a3a` red | 0.15 | Signal fired in Silence zone (steps 44–47) or when TRANSISTOR fires unarmed. `isAnomaly: true`. Counted in `anomalyCount`. Triggers review before advancing layer. |
-| **GATE · ARMED** | `#ffd700` gold | 0.90 | Transistor gate reached `armedAtStep` with state ON. `armedAt` timestamp is set. Gate will fire value `1` at `firesAtStep`. Clean path — no anomaly. |
-| **GATE · UNARMED** | `#3a3a5c` dim | 0.10 | Gate reached `firesAtStep` with state still OFF. `armedAt` is null. Fires value `0`. `isAnomaly: true`. Indicates missing Probe context or layer skip. |
-| **BIO_SIGNAL** | `#f0a050` amber | 0.85 | Physical/lived cost registered as signal input. Participates in no-take boundary detection and can become dominant when transistor is absent. |
+The dashboard loads **`dashboard_constants.generated.js`** next to **`index.html`**. That file is **generated** from `canonical_library.py` by:
 
-### Zones
+```bash
+uv run python scripts/sync_dashboard_constants.py
+```
 
-| Zone | Steps | Multiplier | Behavior |
-|------|-------|------------|----------|
-| **Buildup** | 0–43 | `intensity` param | Gate arming window; signals accumulate |
-| **Silence** | 44–47 | 0.0 | All signals are anomalies; no signal strength |
-| **Drop** | 48–67 | 1.0 | Transistor fire zone; full intensity |
+Run this after changing token weights, colors, zone definitions, or `SCENARIO_LIBRARY` entries.
+
+**CI:** GitHub Actions runs `pytest`, regenerates `dashboard_constants.generated.js`, then `git diff --exit-code dashboard_constants.generated.js` so the tracked file cannot drift from `canonical_library.py`.
+
+Do **not** hand-edit `dashboard_constants.generated.js`.
+
+---
+
+## Running the surfaces
+
+| Surface | Command / action |
+|--------|-------------------|
+| **Browser dashboard** | Open `index.html` in a modern browser (Chrome/Edge 111+, Firefox 113+, Safari 16.2+ for `color-mix()`). No server required. |
+| **API** | `uv run uvicorn api:app --host 0.0.0.0 --port 8000` |
+| **CLI** | `uv run python main.py relief` — also `not`, `moony`, `compare`, `wikidex`, `tui`, `dashboard`, etc. |
+| **Batch client** | With the API up: `uv run python client.py` (optional base URL argument). |
+
+Optional API auth: set env `TOKEN_CALC_API_KEY` and send header `X-API-Key`.
+
+---
+
+## HTTP `/compute` contract (summary)
+
+- **`zone`**: one of `buildup`, `silence`, `drop`. For API requests, **`zone` is authoritative** — the engine does not overwrite it from `params["step"]` (step→zone sync remains the default for interactive calculator use when `sync_zone_from_step` is true).
+- **`active_tokens`**: runtime slugs registered in `TOKEN_WEIGHTS` / `canonical_library.py` (e.g. `transistor`, `decorated`, `gate-on`, `bio-signal`, `freedom-signal`, …).
+- **`operator_state`** (optional): trajectory / annotation modes enforced by the API — **`INTENTIONAL`**, **`BLACK`**, **`SSSEVERUS`**, **`LILY`**, **`PHOENIX`**, **`MAP`**. Defined in `contracts.py` for reuse by `client.py`.
+
+Full behavior and persistence shapes: **`DESIGN.md`**, **`AGENTS.md`**, **`ROUTINE.md`**.
+
+---
+
+## Repository layout
+
+| Path | Role |
+|------|------|
+| `index.html` | Standalone browser dashboard |
+| `dashboard_constants.generated.js` | Generated from `canonical_library.py` (committed; sync via script) |
+| `canonical_library.py` | Token colors/weights/labels, zones, `SCENARIO_LIBRARY` |
+| `calculator.py` | Core compute engine |
+| `design.py` | Dataclasses and domain helpers |
+| `api.py` | FastAPI app (`/compute`, `/compare`, `/search`, `/health`, `/scenarios/moony`, …) |
+| `client.py` | Batch client: 50 scenarios → `POST /compute` |
+| `storage.py` | SQLite `compute_requests` trajectory |
+| `scenarios.py` | Shared presets for CLI/API |
+| `main.py` | CLI entry |
+| `scripts/sync_dashboard_constants.py` | Emits `dashboard_constants.generated.js` |
+| `contracts.py` | Shared API literals (e.g. `operator_state` set) |
+| `tests/` | Pytest suite + HTML smoke check |
+
+Other artifacts: `DESIGN.md`, `AUTHOR.md`, `AZKABAN.html`, `marauders_map.py`, `wikidex.py`, …
+
+---
+
+## Zones (behavior)
+
+| Zone | Typical steps (reference) | Multiplier |
+|------|---------------------------|------------|
+| **buildup** | 0–43 | uses `intensity` parameter |
+| **silence** | 44–47 | 0.0 — no signal strength |
+| **drop** | 48–67 | 1.0 |
+
+Step ranges describe the **interactive** model; API callers should set **`zone`** explicitly.
+
+---
+
+## Tokens (runtime vs label)
+
+Runtime keys are lowercase slugs (e.g. `decorated`, `gate-on`). Display names come from `TOKEN_LABELS` in **`canonical_library.py`** (e.g. `DECORATED_VAR`, `GATE·ARMED`). The dashboard cards highlight the core seven-type harness; the Python/API surface includes additional canonical tokens (dark-mark roster, protection tokens, etc.) per that module.
 
 ---
 
@@ -86,6 +109,8 @@ open index.html          # macOS
 
 Apache License 2.0 — see [LICENSE](LICENSE).
 
+---
+
 ## Version
 
-**1.0.0** — 2026-04-22
+**1.0.0** — evolved through 2026; see `CHANGELOG.md` for notable changes.

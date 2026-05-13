@@ -15,13 +15,15 @@ See AUTHOR.md for the contract:
 
 import sys
 from collections import Counter
-from typing import Any, Optional
+from typing import Any
 
 import requests
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
+
+from contracts import OPERATOR_STATE_VALUES
 
 DEFAULT_BASE_URL = "http://localhost:8000"
 COMPUTE_PATH = "/compute"
@@ -42,7 +44,7 @@ def _scenario(
     drift: float,
     engagement_cost: float,
     service_value: float,
-    operator_state: Optional[str] = None,
+    operator_state: str | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "active_tokens": active_tokens,
@@ -67,7 +69,8 @@ def build_scenarios() -> list[dict[str, Any]]:
       - 15 RELIEF (cost>0 AND value>=cost) — clean exchanges
       - 10 OPEN-borderline (cost low, value low — boundary should stay open)
       - 5 SILENCE-zone anomalies (zone='silence' — strength forced to 0)
-      - 5 operator-state probes (INTENTIONAL / BLACK / MAP) — exercises api.py
+      - 5 operator-state probes — values must be in OPERATOR_STATE_VALUES
+        (INTENTIONAL, BLACK, SSSEVERUS, LILY, PHOENIX, MAP); exercises api.py
         branches without changing the shape returned to run_batch.
     Total = 50.
     """
@@ -203,6 +206,11 @@ def build_scenarios() -> list[dict[str, Any]]:
             operator_state=state,
         ))
 
+    for row in scenarios:
+        op = row.get("operator_state")
+        if op is not None and op not in OPERATOR_STATE_VALUES:
+            raise ValueError(f"unsupported operator_state for API contract: {op!r}")
+
     assert len(scenarios) == 50, f"expected 50 scenarios, got {len(scenarios)}"
     return scenarios
 
@@ -214,7 +222,7 @@ def build_scenarios() -> list[dict[str, Any]]:
 def post_compute(
     payload: dict[str, Any],
     base_url: str = DEFAULT_BASE_URL,
-) -> Optional[dict[str, Any]]:
+) -> dict[str, Any] | None:
     """POST one scenario to /compute.
 
     Returns the parsed JSON on HTTP 200.
@@ -320,7 +328,7 @@ def summarize(results: list[dict[str, Any]]) -> None:
 # Entry point
 # ---------------------------------------------------------------------------
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     argv = argv if argv is not None else sys.argv[1:]
     base_url = DEFAULT_BASE_URL
     if argv:
