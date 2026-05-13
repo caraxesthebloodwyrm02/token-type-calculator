@@ -42,6 +42,10 @@ uv run python client.py
 
 Browser dashboard: open `index.html` directly in a browser (no server needed; requires Chrome 111+ / Firefox 113+ / Safari 16.2+ for `color-mix()`). Keep `dashboard_constants.generated.js` next to `index.html` (run the sync script above after library edits).
 
+### Merge gate (pull requests)
+
+Opening a PR applies the checklist in [`.github/pull_request_template.md`](.github/pull_request_template.md). Complete it before merge.
+
 ---
 
 ## Architecture
