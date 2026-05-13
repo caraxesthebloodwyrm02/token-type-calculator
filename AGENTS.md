@@ -44,7 +44,7 @@ Browser dashboard: open `index.html` directly in a browser (no server needed; re
 
 ### Merge gate (pull requests)
 
-Opening a PR applies the checklist in [`.github/pull_request_template.md`](.github/pull_request_template.md). Complete it before merge.
+Opening a PR applies **Merge Gate (Every PR)** in [`.github/pull_request_template.md`](.github/pull_request_template.md). Satisfy every item before marking ready or merging.
 
 ---
 
