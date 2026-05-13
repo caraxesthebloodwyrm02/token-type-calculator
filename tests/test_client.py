@@ -7,6 +7,7 @@ import requests
 sys.path.insert(0, ".")
 
 from client import build_scenarios, post_compute, run_batch
+from contracts import OPERATOR_STATE_VALUES
 
 
 def _mock_response(status_code: int, json_body: dict | None = None) -> MagicMock:
@@ -26,6 +27,13 @@ def test_build_scenarios_no_take_count():
         if s["engagement_cost"] == 1.0 and s["service_value"] == 0.0
     ]
     assert len(no_take) == 15
+
+
+def test_build_scenarios_operator_states_are_contract_aligned():
+    for scenario in build_scenarios():
+        state = scenario.get("operator_state")
+        if state is not None:
+            assert state in OPERATOR_STATE_VALUES
 
 
 def test_post_compute_handles_400():

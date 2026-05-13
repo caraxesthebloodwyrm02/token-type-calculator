@@ -153,6 +153,9 @@ class TokenTypeCalculator:
     def __init__(self):
         self.active_tokens: Set[str] = {'transistor'}
         self.zone: str = 'buildup'
+        # When True (default), compute() maps params["step"] → zone (CLI/TUI/dashboard).
+        # When False, self.zone is authoritative (HTTP API and presets that set zone explicitly).
+        self.sync_zone_from_step: bool = True
         self.params = {
             'intensity': 0.69,
             'step': 43,
@@ -260,14 +263,14 @@ class TokenTypeCalculator:
         )
 
     def compute(self) -> Dict[str, Any]:
-        # Sync Zone with Step Position
-        step = self.params.get('step', 43)
-        if 0 <= step <= 43:
-            self.zone = 'buildup'
-        elif 44 <= step <= 47:
-            self.zone = 'silence'
-        elif 48 <= step <= 67:
-            self.zone = 'drop'
+        if self.sync_zone_from_step:
+            step = self.params.get('step', 43)
+            if 0 <= step <= 43:
+                self.zone = 'buildup'
+            elif 44 <= step <= 47:
+                self.zone = 'silence'
+            elif 48 <= step <= 67:
+                self.zone = 'drop'
 
         types = list(self.active_tokens)
         total_weight = sum(TOKEN_WEIGHTS[t] for t in types)
