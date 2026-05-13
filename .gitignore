@@ -10,6 +10,28 @@ Desktop.ini
 *.swo
 *~
 
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local environment
+.env
+.env.*
+!.env.example
+
 # Release artifacts (not committed — git tag is the release)
 dist/
 *.zip

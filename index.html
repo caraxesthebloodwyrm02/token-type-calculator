@@ -17,6 +17,7 @@
     --anomaly:      #ff3a3a;
     --gate-on:      #ffd700;
     --gate-off:     #3a3a5c;
+    --bio-signal:   #f0a050;
 
     --buildup:      #00ff88;
     --silence:      #2a2a4a;
@@ -79,6 +80,8 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 16px;
+    position: relative;
+    overflow: hidden;
   }
 
   .panel-title {
@@ -339,6 +342,34 @@
     gap: 3px;
     margin-top: 12px;
   }
+  .matrix-stage {
+    position: relative;
+    border-radius: 8px;
+    --curtain-opacity: 0.22;
+    --spot-x: 52%;
+    --spot-y: 48%;
+  }
+  .matrix-curtain {
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(6, 6, 14, var(--curtain-opacity)), rgba(8, 8, 18, calc(var(--curtain-opacity) + 0.10)));
+    mix-blend-mode: multiply;
+  }
+  .matrix-spotlight {
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    pointer-events: none;
+    background: radial-gradient(240px 170px at var(--spot-x) var(--spot-y), rgba(255, 215, 0, 0.22), rgba(191, 95, 255, 0.12) 45%, rgba(0, 0, 0, 0) 78%);
+  }
+  .matrix-insight {
+    margin-top: 8px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--buildup);
+  }
   .matrix-cell {
     aspect-ratio: 1;
     border-radius: 3px;
@@ -400,6 +431,30 @@
     color: var(--text-dim);
     line-height: 1.5;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.001ms !important;
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+    }
+
+    .token-card.active,
+    .slider-fill,
+    .zone-btn.active,
+    .layer-btn.active,
+    .footer-swatch,
+    .token-dot,
+    .matrix-spotlight {
+      box-shadow: none !important;
+    }
+    .matrix-curtain {
+      opacity: 0.15 !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -449,6 +504,12 @@
         <div class="token-dot"></div>
         <div class="token-label">GATE · UNARMED</div>
         <div class="token-weight" id="w-gate-off">0.00</div>
+        <div class="token-toggle"></div>
+      </div>
+      <div class="token-card" data-type="bio-signal" style="--card-color: var(--bio-signal)" onclick="toggleToken(this)">
+        <div class="token-dot"></div>
+        <div class="token-label">BIO_SIGNAL</div>
+        <div class="token-weight" id="w-bio-signal">0.00</div>
         <div class="token-toggle"></div>
       </div>
     </div>
@@ -541,6 +602,28 @@
       </div>
     </div>
 
+    <div class="slider-group">
+      <div class="slider-header">
+        <span class="slider-name">Engagement Cost</span>
+        <span class="slider-value" style="--slider-color: var(--anomaly)" id="v-engagement_cost">0.00</span>
+      </div>
+      <div class="slider-track">
+        <div class="slider-fill" id="f-engagement_cost" style="width:0%; --slider-color: var(--anomaly)"></div>
+        <input type="range" min="0" max="100" value="0" id="s-engagement_cost" oninput="updateSlider('engagement_cost', this.value, 'var(--anomaly)')">
+      </div>
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-header">
+        <span class="slider-name">Service Value</span>
+        <span class="slider-value" style="--slider-color: var(--decorated)" id="v-service_value">0.00</span>
+      </div>
+      <div class="slider-track">
+        <div class="slider-fill" id="f-service_value" style="width:0%; --slider-color: var(--decorated)"></div>
+        <input type="range" min="0" max="100" value="0" id="s-service_value" oninput="updateSlider('service_value', this.value, 'var(--decorated)')">
+      </div>
+    </div>
+
     <!-- Composite bar -->
     <div style="margin-top:8px; margin-bottom:4px; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text-dim)">Composition</div>
     <div class="composite-bar" id="compositeBar"></div>
@@ -562,6 +645,18 @@
       <div class="output-row">
         <span class="output-key">Anomaly</span>
         <span class="output-val" id="out-anomaly" style="color:var(--text-dim)">FALSE</span>
+      </div>
+      <div class="output-row">
+        <span class="output-key">Boundary</span>
+        <span class="output-val" id="out-boundary" style="color:var(--decorated)">OPEN</span>
+      </div>
+      <div class="output-row">
+        <span class="output-key">Air Movement</span>
+        <span class="output-val" id="out-movement">DRIFT</span>
+      </div>
+      <div class="output-row">
+        <span class="output-key">Nearest Anchor</span>
+        <span class="output-val" id="out-anchor" style="color:var(--transistor)">RELIEF</span>
       </div>
       <div class="output-row">
         <span class="output-key">Signal Strength</span>
@@ -597,7 +692,12 @@
     <div style="font-size:9px; color:var(--text-dim); margin-bottom:8px; line-height:1.6">
       Cell intensity = combined signal strength when both types co-occur in the same step.
     </div>
-    <div id="matrixContainer"></div>
+    <div class="matrix-stage" id="matrixStage">
+      <div id="matrixContainer"></div>
+      <div class="matrix-curtain" id="matrixCurtain"></div>
+      <div class="matrix-spotlight" id="matrixSpotlight"></div>
+    </div>
+    <div class="matrix-insight" id="matrixInsight">● READY · Weak points curtained, strongest lane spotlighted.</div>
 
     <div style="margin-top:20px">
       <div class="panel-title">Live Stats</div>
@@ -615,12 +715,32 @@
           <span class="output-val" id="stat-combo" style="font-size:10px; color:var(--text-dim)">TRANSISTOR</span>
         </div>
         <div class="output-row">
+          <span class="output-key">Engagement Cost</span>
+          <span class="output-val" id="stat-cost">0.0</span>
+        </div>
+        <div class="output-row">
+          <span class="output-key">Service Value</span>
+          <span class="output-val" id="stat-service">0.0</span>
+        </div>
+        <div class="output-row">
           <span class="output-key">Transform Rate</span>
           <span class="output-val" id="stat-rate" style="color:var(--gate-on)">1.00×</span>
         </div>
         <div class="output-row">
           <span class="output-key">Stability</span>
           <span class="output-val" id="stat-stability" style="color:var(--buildup)">HIGH</span>
+        </div>
+        <div class="output-row">
+          <span class="output-key">Face Role</span>
+          <span class="output-val" id="stat-face" style="color:var(--text-dim)">QUEEN</span>
+        </div>
+        <div class="output-row">
+          <span class="output-key">Voice ID</span>
+          <span class="output-val" id="stat-voice" style="color:var(--text-dim)">queen-v1</span>
+        </div>
+        <div class="output-row">
+          <span class="output-key">Fidelity</span>
+          <span class="output-val" id="stat-fidelity" style="color:var(--decorated)">1.00</span>
         </div>
       </div>
     </div>
@@ -675,6 +795,13 @@
       </div>
     </div>
     <div class="footer-entry">
+      <div class="footer-swatch" style="background:var(--bio-signal); box-shadow: 0 0 6px var(--bio-signal)"></div>
+      <div>
+        <div class="footer-entry-title" style="color:var(--bio-signal)">BIO_SIGNAL</div>
+        <div class="footer-entry-desc">Represents a physical action, a 'no-take' event, or a direct input from a user's physical state (limbs, heart-rate, etc).</div>
+      </div>
+    </div>
+    <div class="footer-entry">
       <div class="footer-swatch" style="background: linear-gradient(180deg, var(--buildup), var(--silence), var(--drop))"></div>
       <div>
         <div class="footer-entry-title" style="color:var(--text)">ZONES</div>
@@ -698,7 +825,8 @@ const TOKEN_COLORS = {
   ambient:    '#bf5fff',
   anomaly:    '#ff3a3a',
   'gate-on':  '#ffd700',
-  'gate-off': '#3a3a5c'
+  'gate-off': '#3a3a5c',
+  'bio-signal': '#f0a050'
 };
 
 const TOKEN_WEIGHTS = {
@@ -707,7 +835,8 @@ const TOKEN_WEIGHTS = {
   ambient:    0.45,
   anomaly:    0.15,
   'gate-on':  0.90,
-  'gate-off': 0.10
+  'gate-off': 0.10,
+  'bio-signal': 0.85
 };
 
 const TOKEN_LABELS = {
@@ -716,15 +845,31 @@ const TOKEN_LABELS = {
   ambient:    'AMBIENT',
   anomaly:    'ANOMALY',
   'gate-on':  'GATE·ARMED',
-  'gate-off': 'GATE·UNARMED'
+  'gate-off': 'GATE·UNARMED',
+  'bio-signal': 'BIO_SIGNAL'
 };
 
 const ZONE_COLORS = { buildup: '#00ff88', silence: '#2a2a4a', drop: '#ff6b1a' };
+const STRENGTH_MULTIPLIER = 2.0;
+
+const SCENARIO_LIBRARY = {
+  "RELIEF": { pressure: 0.3, clarity: 1.0, movement: "DRIFT", dominant_type: "TRANSISTOR", is_no_take: false },
+  "NOT": { pressure: 1.0, clarity: 0.0, movement: "TURBULENT", dominant_type: "BIO_SIGNAL", is_no_take: true },
+  "VIBE_CHECK": { pressure: 0.2, clarity: 0.8, movement: "DRIFT", dominant_type: "EXPRESSIVE", is_no_take: false },
+  "AUTHORITY_ASSERTION": { pressure: 0.8, clarity: 0.6, movement: "GUST", dominant_type: "BOLD", is_no_take: false },
+  "INTENTIONAL": { pressure: 0.2, clarity: 0.8, movement: "DRIFT", dominant_type: "TRANSISTOR", is_no_take: false },
+  "GENERATE_MEMORY": { pressure: 0.8, clarity: 0.5, movement: "TURBULENT", dominant_type: "BIO_SIGNAL", is_no_take: false },
+  "MOONY": { pressure: 1.0, clarity: 0.0, movement: "TURBULENT", dominant_type: "BIO_SIGNAL", is_no_take: true },
+  "TONKS": { pressure: 1.0, clarity: 1.0, movement: "GUST", dominant_type: "BIO_SIGNAL", is_no_take: false },
+  "PRONGS": { pressure: 0.3, clarity: 0.8, movement: "DRIFT", dominant_type: "AMBIENT", is_no_take: false },
+  "PADFOOT": { pressure: 0.7, clarity: 0.6, movement: "GUST", dominant_type: "GATE_ON", is_no_take: false },
+  "WORMTAIL": { pressure: 0.4, clarity: 0.1, movement: "TURBULENT", dominant_type: "GATE_OFF", is_no_take: true },
+};
 
 let activeTokens = new Set(['transistor']);
 let currentZone = 'buildup';
 let currentLayer = 'Foundation';
-let params = { intensity: 0.69, step: 43, momentum: 1.0, score: 0.81, cycle: 60, drift: 0.08 };
+let params = { intensity: 0.69, step: 43, momentum: 1.0, score: 0.81, cycle: 60, drift: 0.08, engagement_cost: 0.0, service_value: 0.0 };
 
 function updateSlider(name, val, color, max = 100) {
   const pct = (val / max) * 100;
@@ -752,9 +897,18 @@ function toggleToken(card) {
 }
 
 function setZone(btn) {
-  document.querySelectorAll('.zone-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
   currentZone = btn.dataset.zone;
+  // Sync step with selected zone
+  if (currentZone === 'buildup') params.step = 20;
+  else if (currentZone === 'silence') params.step = 45;
+  else if (currentZone === 'drop') params.step = 60;
+
+  // Update step slider UI
+  const stepSlider = document.getElementById('s-step');
+  if (stepSlider) {
+    stepSlider.value = params.step;
+    updateSlider('step', params.step, 'var(--decorated)', 67);
+  }
   compute();
 }
 
@@ -765,9 +919,47 @@ function setLayer(btn) {
   compute();
 }
 
+function calculateSimilarity(a, b) {
+  const w_p = 1.0, w_c = 1.0, w_dt = 0.5;
+  const type_diff = (a.dominant_type === b.dominant_type) ? 0.0 : 1.0;
+  const dist = Math.sqrt(
+    w_p * Math.pow(a.pressure - b.pressure, 2) +
+    w_c * Math.pow(a.clarity - b.clarity, 2) +
+    w_dt * type_diff
+  );
+  const max_dist = Math.sqrt(w_p + w_c + w_dt);
+  return 1.0 - (dist / max_dist);
+}
+
+function semanticSearch(target) {
+  let bestMatch = null;
+  let highestSimilarity = -1.0;
+  let bestScenario = "NONE";
+
+  for (const [name, scenario] of Object.entries(SCENARIO_LIBRARY)) {
+    const similarity = calculateSimilarity(target, scenario);
+    if (similarity > highestSimilarity) {
+      highestSimilarity = similarity;
+      bestScenario = name;
+    }
+  }
+  return { scenario: bestScenario, similarity: highestSimilarity };
+}
+
 function compute() {
   const types = Array.from(activeTokens);
   const totalWeight = types.reduce((s, t) => s + TOKEN_WEIGHTS[t], 0);
+
+  // Sync Zone with Step Position
+  if (params.step <= 43) currentZone = 'buildup';
+  else if (params.step <= 47) currentZone = 'silence';
+  else currentZone = 'drop';
+
+  // Update Zone Button UI
+  document.querySelectorAll('.zone-btn').forEach(b => {
+    if (b.dataset.zone === currentZone) b.classList.add('active');
+    else b.classList.remove('active');
+  });
 
   // Update weight displays
   Object.keys(TOKEN_WEIGHTS).forEach(t => {
@@ -796,15 +988,47 @@ function compute() {
   // Fired value
   const firedValue = (hasGateOff && !hasGateOn) ? '0' : (activeTokens.has('transistor') ? '1' : '—');
 
+  // Boundary State (NOT logic)
+  const isNoTake = params.engagement_cost > 0 && params.service_value === 0;
+  const boundaryStatus = isNoTake ? 'NO-TAKE (NOT)' : 'OPEN';
+  const boundaryColor = isNoTake ? TOKEN_COLORS['anomaly'] : TOKEN_COLORS['decorated'];
+
   // Anomaly
   const inSilence = currentZone === 'silence';
   const unarmedFire = activeTokens.has('transistor') && hasGateOff && !hasGateOn;
-  const isAnomaly = inSilence || unarmedFire || activeTokens.has('anomaly');
-  const anomalyDrift = isAnomaly ? params.drift : 0;
+  const isAnomaly = inSilence || unarmedFire || activeTokens.has('anomaly') || isNoTake;
+  const anomalyDrift = isAnomaly ? Math.max(params.drift, isNoTake ? 0.8 : 0.0) : 0; // Heavy penalty for NO-TAKE
 
   // Signal strength
   const zoneMultiplier = currentZone === 'buildup' ? params.intensity : currentZone === 'drop' ? 1.0 : 0.0;
-  const strength = Math.min(1, (totalWeight / Object.keys(TOKEN_WEIGHTS).length) * params.momentum * params.score * zoneMultiplier * (1 - anomalyDrift * 0.5)).toFixed(3);
+  const strength = Math.min(1, (totalWeight / Object.keys(TOKEN_WEIGHTS).length) * params.momentum * params.score * zoneMultiplier * STRENGTH_MULTIPLIER * (1 - anomalyDrift * 0.5)).toFixed(3);
+
+  // Air Element Logic (design.py parity)
+  const engagement = params.engagement_cost;
+  const service = params.service_value;
+  const clarity = engagement > 0 ? Math.min(1.0, service / engagement) : 1.0;
+  const pressure = Math.min(1.0, engagement);
+
+  let movement = "DRIFT";
+  if (pressure === 0.0) {
+    movement = "STILL";
+  } else if (clarity < 0.2) {
+    movement = "TURBULENT";
+  } else if (clarity < 0.6) {
+    movement = "GUST";
+  } else {
+    movement = "DRIFT";
+  }
+
+  // Transfiguration: Fingerprint & Semantic Search
+  const currentFingerprint = {
+    pressure: pressure,
+    clarity: clarity,
+    movement: movement,
+    dominant_type: dominant.toUpperCase(),
+    is_no_take: isNoTake
+  };
+  const searchResult = semanticSearch(currentFingerprint);
 
   // Update outputs
   document.getElementById('out-type').textContent = TOKEN_LABELS[dominant];
@@ -815,6 +1039,12 @@ function compute() {
   document.getElementById('out-value').style.color = firedValue === '1' ? TOKEN_COLORS['gate-on'] : (firedValue === '0' ? TOKEN_COLORS['anomaly'] : '#606080');
   document.getElementById('out-anomaly').textContent = isAnomaly ? 'TRUE' : 'FALSE';
   document.getElementById('out-anomaly').style.color = isAnomaly ? TOKEN_COLORS['anomaly'] : '#606080';
+  document.getElementById('out-boundary').textContent = boundaryStatus;
+  document.getElementById('out-boundary').style.color = boundaryColor;
+  document.getElementById('out-movement').textContent = movement;
+  document.getElementById('out-movement').style.color = (movement === 'TURBULENT' || movement === 'STILL') ? TOKEN_COLORS['anomaly'] : (movement === 'GUST' ? TOKEN_COLORS['ambient'] : TOKEN_COLORS['transistor']);
+  document.getElementById('out-anchor').textContent = searchResult.scenario;
+  document.getElementById('out-anchor').style.color = TOKEN_COLORS[SCENARIO_LIBRARY[searchResult.scenario].dominant_type.toLowerCase()] || 'var(--text)';
   document.getElementById('out-strength').textContent = strength;
   document.getElementById('out-strength').style.color = domColor;
   document.getElementById('out-zone').textContent = currentZone.toUpperCase();
@@ -824,6 +1054,8 @@ function compute() {
   document.getElementById('stat-active').textContent = types.length;
   document.getElementById('stat-weight').textContent = totalWeight.toFixed(2);
   document.getElementById('stat-combo').textContent = types.map(t => TOKEN_LABELS[t].split('·')[0].trim()).join('+');
+  document.getElementById('stat-cost').textContent = params.engagement_cost.toFixed(2);
+  document.getElementById('stat-service').textContent = params.service_value.toFixed(2);
   const transformRate = (params.momentum * params.score * (1 - anomalyDrift)).toFixed(2);
   document.getElementById('stat-rate').textContent = transformRate + '×';
   document.getElementById('stat-rate').style.color = parseFloat(transformRate) > 0.7 ? TOKEN_COLORS['gate-on'] : (parseFloat(transformRate) > 0.4 ? TOKEN_COLORS['ambient'] : TOKEN_COLORS['anomaly']);
@@ -831,12 +1063,26 @@ function compute() {
   document.getElementById('stat-stability').textContent = stability;
   document.getElementById('stat-stability').style.color = stability === 'HIGH' ? TOKEN_COLORS['decorated'] : stability === 'MED' ? TOKEN_COLORS['gate-on'] : TOKEN_COLORS['anomaly'];
 
+  // Bridge Metadata
+  const isExpressive = ['transistor', 'decorated', 'ambient'].includes(dominant);
+  const faceRole = isExpressive ? 'QUEEN' : 'KING';
+  const voiceId = isExpressive ? 'queen-v1' : 'king-v1';
+  const fidelity = (isAnomaly || isNoTake) ? 0.70 : 1.00;
+
+  document.getElementById('stat-face').textContent = faceRole;
+  document.getElementById('stat-voice').textContent = voiceId;
+  document.getElementById('stat-fidelity').textContent = fidelity.toFixed(2);
+  document.getElementById('stat-fidelity').style.color = fidelity >= 0.8 ? TOKEN_COLORS['decorated'] : TOKEN_COLORS['anomaly'];
+
   // Barter
   document.getElementById('barter-from-amount').textContent = TOKEN_WEIGHTS[dominant].toFixed(2);
   document.getElementById('barter-from-amount').style.color = domColor;
   document.getElementById('barter-from-type').textContent = TOKEN_LABELS[dominant];
 
-  const barterTarget = types.find(t => t !== dominant);
+  // Target selection: highest weight non-dominant
+  const otherTypes = types.filter(t => t !== dominant);
+  const barterTarget = otherTypes.length > 0 ? otherTypes.reduce((a, b) => TOKEN_WEIGHTS[a] > TOKEN_WEIGHTS[b] ? a : b) : null;
+  
   if (barterTarget) {
     const rate = (TOKEN_WEIGHTS[barterTarget] / TOKEN_WEIGHTS[dominant]) * parseFloat(transformRate);
     document.getElementById('barter-to-amount').textContent = rate.toFixed(3);
@@ -852,12 +1098,17 @@ function compute() {
   }
 
   // Interaction matrix
-  renderMatrix(transformRate);
+  const matrixReport = renderMatrix(transformRate);
+  updateMatrixLighting(matrixReport);
 }
 
 function renderMatrix(rate) {
   const types = ['transistor', 'decorated', 'ambient', 'anomaly', 'gate-on'];
   const labels = ['TRN', 'DEC', 'AMB', 'ANM', 'GTE'];
+  const weakThreshold = 0.24;
+  let weakCells = 0;
+  let totalCells = 0;
+  let strongest = { row: 0, col: 0, combined: 0 };
   let html = '<div class="matrix">';
   html += '<div class="matrix-header"></div>';
   labels.forEach(l => { html += `<div class="matrix-header">${l}</div>`; });
@@ -866,6 +1117,9 @@ function renderMatrix(rate) {
     types.forEach((tb, j) => {
       const wa = TOKEN_WEIGHTS[ta], wb = TOKEN_WEIGHTS[tb];
       const combined = Math.min(1, (wa * wb) * parseFloat(rate) * params.intensity);
+      totalCells += 1;
+      if (combined < weakThreshold) weakCells += 1;
+      if (combined > strongest.combined) strongest = { row: i, col: j, combined };
       const alpha = Math.max(0.08, combined);
       const activeA = activeTokens.has(ta), activeB = activeTokens.has(tb);
       const highlight = activeA && activeB;
@@ -875,6 +1129,27 @@ function renderMatrix(rate) {
   });
   html += '</div>';
   document.getElementById('matrixContainer').innerHTML = html;
+
+  const weakRatio = totalCells > 0 ? weakCells / totalCells : 0;
+  const spotlight = {
+    x: ((strongest.col + 1.5) / (types.length + 1)) * 100,
+    y: ((strongest.row + 1.5) / (types.length + 1)) * 100,
+  };
+
+  return { weakRatio, strongest: strongest.combined, spotlight };
+}
+
+function updateMatrixLighting(report) {
+  const stage = document.getElementById('matrixStage');
+  const insight = document.getElementById('matrixInsight');
+  if (!stage || !insight) return;
+
+  const curtainOpacity = Math.max(0.12, Math.min(0.58, report.weakRatio * 0.72));
+  stage.style.setProperty('--curtain-opacity', curtainOpacity.toFixed(2));
+  stage.style.setProperty('--spot-x', `${report.spotlight.x.toFixed(1)}%`);
+  stage.style.setProperty('--spot-y', `${report.spotlight.y.toFixed(1)}%`);
+
+  insight.textContent = `● READY · Weak scan ${Math.round(report.weakRatio * 100)}% masked · strongest lane ${report.strongest.toFixed(2)}`;
 }
 
 // Init
