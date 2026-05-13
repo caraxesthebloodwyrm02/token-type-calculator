@@ -44,7 +44,7 @@ Browser dashboard: open `index.html` directly in a browser (no server needed; re
 
 ### Merge gate (pull requests)
 
-Opening a PR applies **Merge Gate (Every PR)** in [`.github/pull_request_template.md`](.github/pull_request_template.md). Satisfy every item before marking ready or merging.
+The **Merge Gate (Every PR)** criteria live only in [`.github/pull_request_template.md`](.github/pull_request_template.md) (single source of truth). Opening a PR pre-fills those checkboxes on GitHub. Before marking a PR ready, merging, or recommending merge, satisfy **every** item there — same bar for humans and agents.
 
 ---
 
