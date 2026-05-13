@@ -1,11 +1,11 @@
 import os
 import time
 from contextlib import asynccontextmanager
-from typing import Any, Dict, Literal
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from calculator import TOKEN_WEIGHTS, TokenTypeCalculator, SCENARIO_LIBRARY
 from design import MOONY_SCORE_THRESHOLD, TONKS_SCORE_THRESHOLD, PRONGS_PRESENCE_THRESHOLD, SSSEVERUS_CLARITY_GAP, PHOENIX_CORE_SCORE
@@ -36,6 +36,36 @@ class ComputeRequest(BaseModel):
         return tokens
 
 
+class VisualStateModel(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    face: object
+    air: object
+
+
+class AudioSignalModel(BaseModel):
+    text: str
+    voice_id: str
+    fidelity: float
+    resonance: dict[str, float]
+    is_anomaly: bool
+    timestamp: str
+
+
+class FingerprintModel(BaseModel):
+    pressure: float
+    clarity: float
+    movement: str
+    dominant_type: str
+    is_no_take: bool
+
+
+class ComparisonReportModel(BaseModel):
+    similarity: float
+    drift_magnitude: float
+    qualitative_shift: str
+    is_match: bool
+
+
 class ComputeResponse(BaseModel):
     dominant: str
     dom_color: str
@@ -56,9 +86,9 @@ class ComputeResponse(BaseModel):
     air_color: str
     air_pressure: float
     air_clarity: float
-    visual_state: Dict[str, Any]
-    audio_signal: Any
-    fingerprint: Any
+    visual_state: VisualStateModel
+    audio_signal: AudioSignalModel
+    fingerprint: FingerprintModel
     story: str | None = None
     memory_candidate: bool = False
     paths: list[str] | None = None
@@ -66,14 +96,26 @@ class ComputeResponse(BaseModel):
     patronus_state: dict | None = None
 
 
-def verify_api_key(x_api_key: str | None = Header(None)):
+def verify_api_key(x_api_key: str | None = Header(None)) -> str | None:
     expected = os.environ.get("TOKEN_CALC_API_KEY")
     if expected and x_api_key != expected:
         raise HTTPException(status_code=401, detail="Unauthorized: Invalid or missing API key")
     return x_api_key
 
 
-def narrate_shift(result: Dict[str, Any], closest_scenario: str | None = None) -> str:
+def _apply_request(calc: "TokenTypeCalculator", payload: ComputeRequest) -> None:
+    """Apply ComputeRequest fields onto a fresh TokenTypeCalculator instance."""
+    calc.active_tokens = set(payload.active_tokens)
+    calc.zone = payload.zone
+    calc.params["intensity"] = payload.intensity
+    calc.params["momentum"] = payload.momentum
+    calc.params["score"] = payload.score
+    calc.params["drift"] = payload.drift
+    calc.params["engagement_cost"] = payload.engagement_cost
+    calc.params["service_value"] = payload.service_value
+
+
+def narrate_shift(result: dict, closest_scenario: str | None = None) -> str:
     """Synthesize a narrative 'Vision' for the current state shift."""
     fp = result["fingerprint"]
     boundary = result["boundary_status"]
@@ -105,13 +147,13 @@ class CompareRequest(BaseModel):
 class CompareResponse(BaseModel):
     a: ComputeResponse
     b: ComputeResponse
-    report: Any
+    report: ComparisonReportModel
 
 
 class SearchResponse(BaseModel):
     query_result: ComputeResponse
     closest_scenario: str
-    report: Any
+    report: ComparisonReportModel
 
 
 class HealthResponse(BaseModel):
@@ -128,13 +170,12 @@ app = FastAPI(
     title="Token Type Calculator API",
     version="0.1.0",
     lifespan=lifespan,
-    dependencies=[Depends(verify_api_key)]
 )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -145,24 +186,10 @@ def health() -> HealthResponse:
     return HealthResponse(status="ok")
 
 
-@app.post("/compute", response_model=ComputeResponse)
-def compute(payload: ComputeRequest) -> Dict[str, Any]:
-    if not payload.active_tokens:
-        raise HTTPException(status_code=400, detail="active_tokens must include at least one token")
-
-    invalid = [token for token in payload.active_tokens if token not in TOKEN_WEIGHTS]
-    if invalid:
-        raise HTTPException(status_code=400, detail=f"invalid tokens: {', '.join(invalid)}")
-
+@app.post("/compute", response_model=ComputeResponse, dependencies=[Depends(verify_api_key)])
+def compute(payload: ComputeRequest) -> dict:
     calc = TokenTypeCalculator()
-    calc.active_tokens = set(payload.active_tokens)
-    calc.zone = payload.zone
-    calc.params["intensity"] = payload.intensity
-    calc.params["momentum"] = payload.momentum
-    calc.params["score"] = payload.score
-    calc.params["drift"] = payload.drift
-    calc.params["engagement_cost"] = payload.engagement_cost
-    calc.params["service_value"] = payload.service_value
+    _apply_request(calc, payload)
 
     t0 = time.perf_counter()
     result = calc.compute()
@@ -261,38 +288,20 @@ def compute(payload: ComputeRequest) -> Dict[str, Any]:
     return result
 
 
-@app.post("/compare", response_model=CompareResponse)
-def compare(payload: CompareRequest) -> Dict[str, Any]:
+@app.post("/compare", response_model=CompareResponse, dependencies=[Depends(verify_api_key)])
+def compare(payload: CompareRequest) -> dict:
     calc = TokenTypeCalculator()
 
     # Compute A
     calc_a = TokenTypeCalculator()
-    calc_a.active_tokens = set(payload.a.active_tokens)
-    calc_a.zone = payload.a.zone
-    calc_a.params.update({
-        "intensity": payload.a.intensity,
-        "momentum": payload.a.momentum,
-        "score": payload.a.score,
-        "drift": payload.a.drift,
-        "engagement_cost": payload.a.engagement_cost,
-        "service_value": payload.a.service_value,
-    })
+    _apply_request(calc_a, payload.a)
     t0 = time.perf_counter()
     res_a = calc_a.compute()
     save_request("/compare", payload.a.model_dump(), res_a, (time.perf_counter() - t0) * 1000)
 
     # Compute B
     calc_b = TokenTypeCalculator()
-    calc_b.active_tokens = set(payload.b.active_tokens)
-    calc_b.zone = payload.b.zone
-    calc_b.params.update({
-        "intensity": payload.b.intensity,
-        "momentum": payload.b.momentum,
-        "score": payload.b.score,
-        "drift": payload.b.drift,
-        "engagement_cost": payload.b.engagement_cost,
-        "service_value": payload.b.service_value,
-    })
+    _apply_request(calc_b, payload.b)
     t0 = time.perf_counter()
     res_b = calc_b.compute()
     save_request("/compare", payload.b.model_dump(), res_b, (time.perf_counter() - t0) * 1000)
@@ -310,7 +319,7 @@ def compare(payload: CompareRequest) -> Dict[str, Any]:
     }
 
 
-@app.get("/scenarios/moony", response_model=ComputeResponse)
+@app.get("/scenarios/moony", response_model=ComputeResponse, dependencies=[Depends(verify_api_key)])
 def moony_scenario() -> Dict[str, Any]:
     calc = run_moony_scenario()
     moony_params = {
@@ -330,19 +339,10 @@ def moony_scenario() -> Dict[str, Any]:
     return result
 
 
-@app.post("/search", response_model=SearchResponse)
-def search(payload: ComputeRequest) -> Dict[str, Any]:
+@app.post("/search", response_model=SearchResponse, dependencies=[Depends(verify_api_key)])
+def search(payload: ComputeRequest) -> dict:
     calc = TokenTypeCalculator()
-    calc.active_tokens = set(payload.active_tokens)
-    calc.zone = payload.zone
-    calc.params.update({
-        "intensity": payload.intensity,
-        "momentum": payload.momentum,
-        "score": payload.score,
-        "drift": payload.drift,
-        "engagement_cost": payload.engagement_cost,
-        "service_value": payload.service_value,
-    })
+    _apply_request(calc, payload)
     t0 = time.perf_counter()
     res = calc.compute()
     save_request("/search", payload.model_dump(), res, (time.perf_counter() - t0) * 1000)

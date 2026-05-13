@@ -39,3 +39,17 @@ token_calc.db
 dist/
 *.zip
 *.tar.gz
+
+# Session notes, assistant dumps, and scratch exports (not product)
+.claude-progress.md
+*command-message*.txt
+context_day4_exit.yaml
+context_day4_exit_nl.md
+tui.txt
+
+# Narrative / experiment artifacts kept out of the main tree
+AZKABAN.html
+GEMINI.md
+STORY.md
+TRANSFIGURATION.md
+canvas.png

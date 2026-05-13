@@ -66,3 +66,11 @@ But there's somethin' out there
 * **13:00 - 14:00**: *Lunch.*
 * **14:00 - 15:30**: **System Integration Test**. Run the rebuilt client. Watch the API process, storage save, and summary print. 
 * **15:30 - 17:00**: **Final Review against Design**. Compare the living API against `DESIGN.md`. Document anomalies.
+
+---
+
+## Routine status
+
+**Closed — Day 5 gauntlet completed.** The teardown/rebuild in Day 5 is a **muscle-memory drill** (blank-editor rebuild), not an instruction to strip the shipped tree on `main`.
+
+**Canonical implementation:** `api.py`, `storage.py`, `client.py`, plus tests and CI described in [`AGENTS.md`](AGENTS.md). Project commands (`uv run pytest`, API server, batch client, dashboard sync) live there.
