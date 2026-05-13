@@ -40,7 +40,6 @@ Token weights encode that asymmetry directly: TRANSISTOR (1.00) → DECORATED_VA
 | `main.py` | Rich CLI scenario runner |
 | `tests/` | Python and browser smoke tests |
 | `DESIGN.md` | Design contract and implementation map |
-| `TRANSFIGURATION.md` | Similarity/fingerprint layer notes |
 | `ROUTINE.md` | Five-day API/data operations routine |
 | `AZKABAN.html` | API guide artifact |
 | `canvas.png` | Visual/canvas input artifact |
