@@ -9,7 +9,7 @@ This document is shaped by two design-document role models:
 
 For this project, `DESIGN.md` is the net remainder of steering and observation: the place where semantic tokens, exchange rules, visual reading, and implementation-facing contracts stay aligned.
 
-`AUTHOR.md` is the companion document. Where `DESIGN.md` is the engineering+visual contract, `AUTHOR.md` is the operator stance — the vocabulary, the conventions, and the single structural rule the project enforces. When the two documents disagree, `DESIGN.md` describes *what the system must do* and `AUTHOR.md` describes *how it must be written*. Both are load-bearing.
+`docs/lore/AUTHOR.md` is the companion document. Where `DESIGN.md` is the engineering+visual contract, `AUTHOR.md` is the operator stance — the vocabulary, the conventions, and the single structural rule the project enforces. When the two documents disagree, `DESIGN.md` describes *what the system must do* and `AUTHOR.md` describes *how it must be written*. Both are load-bearing.
 
 ## Purpose and scope
 
@@ -54,7 +54,7 @@ The token type calculator operates within the following environment:
 | `tests/test_storage.py` | Round-trip, idempotency, and sorted-`active_tokens` validation for the storage layer |
 | `tests/test_client.py` | Scenario-count, no-take-count, error-handling, and batch-filter validation for the client |
 
-The browser mirrors Python token weights, colors, zones, and `SCENARIO_LIBRARY` fingerprints via **`dashboard_constants.generated.js`**, produced from **`canonical_library.py`** by `scripts/sync_dashboard_constants.py`. Run `uv run python scripts/sync_dashboard_constants.py` after changing weights, colors, or library entries. Interactive dashboard logic stays in `index.html`; gate/boundary parity caveats remain documented in AUTHOR.md.
+The browser mirrors Python token weights, colors, zones, and `SCENARIO_LIBRARY` fingerprints via **`dashboard_constants.generated.js`**, produced from **`canonical_library.py`** by `scripts/sync_dashboard_constants.py`. Run `uv run python scripts/sync_dashboard_constants.py` after changing weights, colors, or library entries. Interactive dashboard logic stays in `index.html`; gate/boundary parity caveats remain documented in `docs/lore/AUTHOR.md`.
 
 ```mermaid
 flowchart LR
@@ -317,7 +317,7 @@ This keeps the first five-day build simple: start with manually confirmed artifa
 
 ## Persistence contract — `storage.py`
 
-`storage.py` is the SQLite layer. It is the only module that writes to disk. Read together with `tests/test_storage.py` and `AUTHOR.md`.
+`storage.py` is the SQLite layer. It is the only module that writes to disk. Read together with `tests/test_storage.py` and `docs/lore/AUTHOR.md`.
 
 ### Function shapes
 
@@ -356,7 +356,7 @@ Surface signal lives as real columns so trajectory queries don't have to JSON-de
 
 ## Batch client contract — `client.py`
 
-`client.py` is the Day 4 batch client. It is the only module that makes outbound HTTP requests. Read together with `tests/test_client.py`, `ROUTINE.md` Day 4, and `AUTHOR.md`.
+`client.py` is the Day 4 batch client. It is the only module that makes outbound HTTP requests. Read together with `tests/test_client.py`, `ROUTINE.md` Day 4, and `docs/lore/AUTHOR.md`.
 
 ### Function shapes
 
@@ -465,7 +465,7 @@ Surface signal lives as real columns so trajectory queries don't have to JSON-de
 
 **Shape in the system:** query scope (not a scenario). It uses `semantic_search` across the full Marauder subset of SCENARIO_LIBRARY and annotates the trajectory with relational context — gate state lineage, no-take history, and the presence or absence of the gravitational constant (PRONGS).
 
-**Relationship to AZKABAN:** AZKABAN.html is the constrained dark state — the prison. BLACK is what opens after escape. AZKABAN constrains; BLACK contextualizes. They are the before and after of the same gate event.
+**Relationship to AZKABAN:** `docs/lore/AZKABAN.html` is the constrained dark state — the prison. BLACK is what opens after escape. AZKABAN constrains; BLACK contextualizes. They are the before and after of the same gate event.
 
 **Next construction after BLACK opens:** The BLACK query path in `api.py` — add `operator_state: "BLACK"` handling that runs `semantic_search` filtered to Marauder scenarios and returns a `marauder_trajectory` annotation on the compute response. *(Status: built — `api.py` lines 137–151.)*
 
@@ -527,7 +527,7 @@ REGULUS is the only Death Eater scenario with `is_no_take=False`. When his simil
 
 - Google Labs `DESIGN.md` format: design-system structure, visual contract, components, and do/don't guardrails.
 - Software Design Document template: purpose, scope, system overview, architecture, interfaces, and testing strategy.
-- `AUTHOR.md`: operator stance, vocabulary, conventions, and the prescriptive contracts for `storage.py` and `client.py`.
+- `docs/lore/AUTHOR.md`: operator stance, vocabulary, conventions, and the prescriptive contracts for `storage.py` and `client.py`.
 - `ROUTINE.md`: five-day muscle-memory routine that produced `storage.py` (Day 3) and `client.py` (Day 4).
 - Project implementation files: `index.html`, `calculator.py`, `api.py`, `main.py`, `design.py`, `storage.py`, `client.py`, `marauders_map.py`, and `tests/`.
 

@@ -4,7 +4,7 @@ Every /compute, /compare, /search, /scenarios/moony, and CLI scenario writes a
 row here. read_trajectory() makes the resulting map readable by marauders_map.py
 and by the INTENTIONAL / BLACK / MAP operator states in api.py.
 
-See AUTHOR.md for conventions:
+See docs/lore/AUTHOR.md for conventions:
   - init_db is idempotent (safe to call twice).
   - active_tokens are sorted before serializing.
   - non-JSON dataclasses are normalized via dataclasses.asdict.

@@ -83,7 +83,7 @@ Full behavior and persistence shapes: **`DESIGN.md`**, **`AGENTS.md`**, **`ROUTI
 | `contracts.py` | Shared API literals (e.g. `operator_state` set) |
 | `tests/` | Pytest suite + HTML smoke check |
 
-Other artifacts: `DESIGN.md`, `AUTHOR.md`, `AZKABAN.html`, `marauders_map.py`, `wikidex.py`, …
+Other artifacts: `DESIGN.md`, `marauders_map.py`, `wikidex.py`, and lore notes under `docs/lore/` (`AUTHOR.md`, `STORY.md`, `TRANSFIGURATION.md`, `WATERFALL.md`, `GEMINI.md`, `AZKABAN.html`).
 
 ---
 

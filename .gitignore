@@ -48,8 +48,8 @@ context_day4_exit_nl.md
 tui.txt
 
 # Narrative / experiment artifacts kept out of the main tree
-AZKABAN.html
-GEMINI.md
-STORY.md
-TRANSFIGURATION.md
+docs/lore/AZKABAN.html
+docs/lore/GEMINI.md
+docs/lore/STORY.md
+docs/lore/TRANSFIGURATION.md
 canvas.png
