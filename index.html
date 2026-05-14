@@ -6,36 +6,37 @@
 <title>Token Type Calculator</title>
 <style>
   :root {
-    --bg:           #07070f;
-    --surface:      #0f0f1e;
-    --surface2:     #161628;
-    --border:       #1e1e3a;
+    --bg:           #0c0e14;
+    --surface:      #13151d;
+    --surface2:     #1a1c26;
+    --border:       #262838;
 
-    --transistor:   #00d4ff;
-    --decorated:    #39ff14;
-    --ambient:      #bf5fff;
-    --anomaly:      #ff3a3a;
-    --gate-on:      #ffd700;
-    --gate-off:     #3a3a5c;
-    --bio-signal:   #f0a050;
-    --morsmordre:   #8b0000;
-    --legilimens:   #6a0dad;
-    --imperius:     #4b0082;
-    --protego:      #c0c0ff;
-    --freedom-signal: #ffa07a;
+    --transistor:   #48a8c8;
+    --decorated:    #4e9e4e;
+    --ambient:      #8070a8;
+    --anomaly:      #c04848;
+    --gate-on:      #c8a040;
+    --gate-off:     #484860;
+    --bio-signal:   #c89050;
+    --morsmordre:   #8b1a1a;
+    --legilimens:   #603880;
+    --imperius:     #382868;
+    --protego:      #7878a0;
+    --freedom-signal: #c08050;
 
-    --buildup:      #00ff88;
-    --silence:      #2a2a4a;
-    --drop:         #ff6b1a;
+    --buildup:      #4e9e4e;
+    --silence:      #282838;
+    --drop:         #c06030;
 
-    --text:         #e0e0f0;
-    --text-dim:     #6060a0;
-    --text-muted:   #3a3a6a;
+    --text:         #d0cec8;
+    --text-dim:     #686a7c;
+    --text-muted:   #3c3e50;
 
-    --radius:       10px;
-    --glow-sm:      0 0 8px;
-    --glow-md:      0 0 16px;
-    --glow-lg:      0 0 32px;
+    --accent:       #c8a040;
+    --radius:       8px;
+    --glow-sm:      0 0 4px;
+    --glow-md:      0 0 8px;
+    --glow-lg:      0 0 16px;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -43,7 +44,7 @@
   body {
     background: var(--dynamic-bg, var(--bg));
     color: var(--text);
-    font-family: 'Courier New', monospace;
+    font-family: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
     font-size: 13px;
     min-height: 100vh;
     padding: 24px;
@@ -56,14 +57,21 @@
     margin-bottom: 28px;
   }
   .header h1 {
-    font-size: 22px;
-    letter-spacing: 4px;
+    font-size: 20px;
+    letter-spacing: 8px;
     text-transform: uppercase;
-    background: linear-gradient(90deg, var(--transistor), var(--ambient), var(--drop));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 6px;
+    color: var(--accent);
+    font-weight: 400;
+    margin-bottom: 10px;
+  }
+  .header h1::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 1px;
+    background: var(--accent);
+    margin: 10px auto 0;
+    opacity: 0.5;
   }
   .header .sub {
     color: var(--text-dim);
@@ -91,7 +99,7 @@
     transition: background var(--air-speed, 2.4s) ease, box-shadow var(--air-speed, 2.4s) ease;
   }
   .panel:hover {
-    box-shadow: 0 0 var(--air-glow, 8px) var(--dynamic-surface, transparent);
+    border-color: #363a50;
   }
 
   .panel-title {
@@ -123,17 +131,16 @@
     background: var(--surface2);
   }
   .token-card.active {
-    border-color: var(--card-color);
-    box-shadow: var(--glow-sm) var(--card-color);
-    background: color-mix(in srgb, var(--card-color) 8%, var(--surface2));
+    border-color: color-mix(in srgb, var(--card-color) 35%, transparent);
+    border-left: 3px solid var(--card-color);
+    background: color-mix(in srgb, var(--card-color) 5%, var(--surface2));
   }
   .token-card:hover { filter: brightness(1.15); }
 
   .token-dot {
-    width: 10px; height: 10px;
+    width: 8px; height: 8px;
     border-radius: 50%;
     background: var(--card-color);
-    box-shadow: var(--glow-sm) var(--card-color);
     flex-shrink: 0;
   }
   .token-label {
@@ -215,7 +222,6 @@
     height: 100%;
     border-radius: 3px;
     background: var(--slider-color, var(--transistor));
-    box-shadow: var(--glow-sm) var(--slider-color, var(--transistor));
     pointer-events: none;
     transition: width 0.05s;
   }
@@ -252,7 +258,6 @@
   .zone-btn.active {
     background: var(--btn-color);
     color: var(--bg);
-    box-shadow: var(--glow-sm) var(--btn-color);
     font-weight: bold;
   }
 
@@ -276,9 +281,8 @@
     transition: all 0.15s;
   }
   .layer-btn.active {
-    border-color: var(--transistor);
-    color: var(--transistor);
-    box-shadow: var(--glow-sm) var(--transistor);
+    border-color: var(--accent);
+    color: var(--accent);
   }
 
   /* ── Output panel ── */
@@ -372,7 +376,7 @@
     inset: 0;
     border-radius: 8px;
     pointer-events: none;
-    background: radial-gradient(240px 170px at var(--spot-x) var(--spot-y), rgba(255, 215, 0, 0.22), rgba(191, 95, 255, 0.12) 45%, rgba(0, 0, 0, 0) 78%);
+    background: radial-gradient(200px 140px at var(--spot-x) var(--spot-y), rgba(200, 160, 64, 0.08), rgba(0, 0, 0, 0) 60%);
   }
   .matrix-insight {
     margin-top: 8px;
@@ -452,17 +456,8 @@
       scroll-behavior: auto !important;
     }
 
-    .token-card.active,
-    .slider-fill,
-    .zone-btn.active,
-    .layer-btn.active,
-    .footer-swatch,
-    .token-dot,
-    .matrix-spotlight {
-      box-shadow: none !important;
-    }
     .matrix-curtain {
-      opacity: 0.15 !important;
+      opacity: 0.10 !important;
     }
   }
 </style>
@@ -795,35 +790,35 @@
   <div class="footer-title">Token Type Annotations — Signal Glossary</div>
   <div class="footer-grid">
     <div class="footer-entry">
-      <div class="footer-swatch" style="background:var(--transistor); box-shadow: 0 0 6px var(--transistor)"></div>
+      <div class="footer-swatch" style="background:var(--transistor)"></div>
       <div>
         <div class="footer-entry-title" style="color:var(--transistor)">TRANSISTOR</div>
         <div class="footer-entry-desc">Binary gate signal. Value "1" = armed &amp; fired. Value "0" = fired unarmed. armedAt must be set before firesAtStep or anomaly is raised. Highest authority weight.</div>
       </div>
     </div>
     <div class="footer-entry">
-      <div class="footer-swatch" style="background:var(--decorated); box-shadow: 0 0 6px var(--decorated)"></div>
+      <div class="footer-swatch" style="background:var(--decorated)"></div>
       <div>
         <div class="footer-entry-title" style="color:var(--decorated)">DECORATED_VAR</div>
         <div class="footer-entry-desc">Environment variable injection at a designated triggerStep. Sets runtime context (e.g. HARNESS_EVENT_PROGRESS). Always fires regardless of gate state.</div>
       </div>
     </div>
     <div class="footer-entry">
-      <div class="footer-swatch" style="background:var(--ambient); box-shadow: 0 0 6px var(--ambient)"></div>
+      <div class="footer-swatch" style="background:var(--ambient)"></div>
       <div>
         <div class="footer-entry-title" style="color:var(--ambient)">AMBIENT</div>
         <div class="footer-entry-desc">Background passive signal. Emitted continuously across zone steps. Used for telemetry, heartbeat, and baseline drift measurement. No gate dependency.</div>
       </div>
     </div>
     <div class="footer-entry">
-      <div class="footer-swatch" style="background:var(--anomaly); box-shadow: 0 0 6px var(--anomaly)"></div>
+      <div class="footer-swatch" style="background:var(--anomaly)"></div>
       <div>
         <div class="footer-entry-title" style="color:var(--anomaly)">ANOMALY</div>
         <div class="footer-entry-desc">Signal fired in silence zone (steps 44–47) or when transistor fires unarmed. isAnomaly: true. Counted in anomalyCount. Triggers review before advancing layer.</div>
       </div>
     </div>
     <div class="footer-entry">
-      <div class="footer-swatch" style="background:var(--gate-on); box-shadow: 0 0 6px var(--gate-on)"></div>
+      <div class="footer-swatch" style="background:var(--gate-on)"></div>
       <div>
         <div class="footer-entry-title" style="color:var(--gate-on)">GATE · ARMED</div>
         <div class="footer-entry-desc">Transistor gate reached armedAtStep with state ON. armedAt timestamp is set. Gate will fire value "1" at firesAtStep. Clean path — no anomaly.</div>
@@ -832,12 +827,12 @@
     <div class="footer-entry">
       <div class="footer-swatch" style="background:var(--gate-off)"></div>
       <div>
-        <div class="footer-entry-title" style="color:#8888bb">GATE · UNARMED</div>
+        <div class="footer-entry-title" style="color:#686a7c">GATE · UNARMED</div>
         <div class="footer-entry-desc">Gate reached firesAtStep with state still OFF. armedAt is null. Fires value "0". isAnomaly is set to true. Indicates missing Probe context or layer skip.</div>
       </div>
     </div>
     <div class="footer-entry">
-      <div class="footer-swatch" style="background:var(--bio-signal); box-shadow: 0 0 6px var(--bio-signal)"></div>
+      <div class="footer-swatch" style="background:var(--bio-signal)"></div>
       <div>
         <div class="footer-entry-title" style="color:var(--bio-signal)">BIO_SIGNAL</div>
         <div class="footer-entry-desc">Represents a physical action, a 'no-take' event, or a direct input from a user's physical state (limbs, heart-rate, etc).</div>
@@ -861,6 +856,15 @@
 </footer>
 
 <script src="dashboard_constants.generated.js"></script>
+<script>
+Object.assign(TOKEN_COLORS, {
+  "transistor":"#48a8c8","decorated":"#4e9e4e","ambient":"#8070a8",
+  "anomaly":"#c04848","gate-on":"#c8a040","gate-off":"#484860",
+  "bio-signal":"#c89050","morsmordre":"#8b1a1a","legilimens":"#603880",
+  "imperius":"#382868","protego":"#7878a0","freedom-signal":"#c08050"
+});
+Object.assign(ZONE_COLORS, {"buildup":"#4e9e4e","silence":"#282838","drop":"#c06030"});
+</script>
 <script>
 // Parity note: imperius COMPROMISED gate logic and freedom-signal override exist in
 // calculator.py / API only — not replicated in this browser engine (AUTHOR.md).
