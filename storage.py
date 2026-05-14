@@ -171,7 +171,9 @@ def save_request(
         conn.commit()
         row_id = cur.lastrowid
 
-    return int(row_id)
+    if row_id is None:
+        raise RuntimeError("INSERT into compute_requests produced no lastrowid")
+    return row_id
 
 
 # ---------------------------------------------------------------------------

@@ -18,14 +18,21 @@ Token signal calculator with four surfaces: FastAPI server, Rich CLI, standalone
 ## Build & test
 
 ```bash
-# Install deps
-uv sync
+# Install deps (includes dev group: pytest, ruff, basedpyright)
+uv sync --all-groups
 
 # Run tests
 uv run pytest
 
-# CI: GitHub Actions runs `pytest`, regenerates `dashboard_constants.generated.js`, then
-# `git diff --exit-code` on that file so edits to canonical_library.py cannot merge without a fresh sync.
+# Lint
+uv run ruff check .
+
+# Type-check
+uv run basedpyright
+
+# CI: GitHub Actions runs ruff, basedpyright, pytest, regenerates
+# `dashboard_constants.generated.js`, then `git diff --exit-code` on that file so edits
+# to canonical_library.py cannot merge without a fresh sync.
 
 # Regenerate browser constants after editing TOKEN_* / SCENARIO_LIBRARY in canonical_library.py
 uv run python scripts/sync_dashboard_constants.py
