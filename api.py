@@ -297,8 +297,9 @@ def compute(payload: ComputeRequest) -> dict:
 
     # Add narrative story
     closest = None
-    if result.get("marauder_trajectory") and "closest" in result["marauder_trajectory"]:
-        closest = result["marauder_trajectory"]["closest"]
+    mt = result.get("marauder_trajectory")
+    if mt and "closest" in mt:
+        closest = mt["closest"]
     result["story"] = narrate_shift(result, closest)
 
     save_request("/compute", payload.model_dump(), result, duration_ms)
