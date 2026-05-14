@@ -7,15 +7,9 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from calculator import SCENARIO_LIBRARY, TOKEN_WEIGHTS, TokenTypeCalculator
+from calculator import TOKEN_WEIGHTS, TokenTypeCalculator
 from contracts import OperatorState
-from design import (
-    MOONY_SCORE_THRESHOLD,
-    PHOENIX_CORE_SCORE,
-    PRONGS_PRESENCE_THRESHOLD,
-    SSSEVERUS_CLARITY_GAP,
-    TONKS_SCORE_THRESHOLD,
-)
+from operator_states import apply_operator_state
 from scenarios import run_moony_scenario
 from storage import init_db, read_trajectory, save_request
 
@@ -215,85 +209,9 @@ def compute(payload: ComputeRequest) -> dict:
         fp.pressure > 0.6 and 0.3 <= fp.clarity <= 0.7 and fp.movement == "TURBULENT"
     )
 
-    result["paths"] = None
-    result["marauder_trajectory"] = None
-
-    if payload.operator_state == "INTENTIONAL":
+    if payload.operator_state:
         trajectory = read_trajectory(limit=10)
-        search = calc.semantic_search(fp)
-        result["paths"] = [search["scenario"]] if search["scenario"] else []
-        result["trajectory"] = trajectory[:5]
-
-    elif payload.operator_state == "BLACK":
-        trajectory = read_trajectory(limit=10)
-        marauder_keys = {"MOONY", "TONKS", "PRONGS", "PADFOOT", "WORMTAIL", "SSSEVERUS", "LILY"}
-        scores = {
-            name: calc.calculate_similarity(fp, SCENARIO_LIBRARY[name]).similarity
-            for name in marauder_keys
-        }
-        closest = max(scores, key=lambda k: scores[k])
-        result["marauder_trajectory"] = {
-            "closest": closest,
-            "scores": {k: round(v, 4) for k, v in scores.items()},
-            "gate_history_coherent": all(k in SCENARIO_LIBRARY for k in ("PADFOOT", "WORMTAIL")),
-            "prongs_present": scores.get("PRONGS", 0.0) >= PRONGS_PRESENCE_THRESHOLD,
-            "trajectory_length": len(trajectory),
-        }
-
-    elif payload.operator_state == "SSSEVERUS":
-        trajectory = read_trajectory(limit=10)
-        snapes = calc.calculate_similarity(fp, SCENARIO_LIBRARY["SSSEVERUS"])
-        patronus_gap = abs(fp.clarity - 1.0)
-        result["marauder_trajectory"] = {
-            "closest": "SSSEVERUS",
-            "scores": {"SSSEVERUS": round(snapes.similarity, 4)},
-            "clarity_gap": round(patronus_gap, 4),
-            "inherited_anchor": patronus_gap >= SSSEVERUS_CLARITY_GAP,
-            "trajectory_length": len(trajectory),
-        }
-
-    elif payload.operator_state == "LILY":
-        trajectory = read_trajectory(limit=10)
-        lily_sim = calc.calculate_similarity(fp, SCENARIO_LIBRARY["LILY"])
-        at_perfect_cast = abs(fp.pressure - 1.0) < 0.01 and abs(fp.clarity - 1.0) < 0.01
-        result["marauder_trajectory"] = {
-            "closest": "LILY",
-            "scores": {"LILY": round(lily_sim.similarity, 4)},
-            "at_perfect_cast": at_perfect_cast,
-            "trajectory_length": len(trajectory),
-        }
-
-    elif payload.operator_state == "PHOENIX":
-        trajectory = read_trajectory(limit=10)
-        phoenix_members = {"MOONY", "TONKS", "PRONGS", "PADFOOT", "SSSEVERUS", "LILY", "DUMBLEDORE", "MOODY"}
-        scores = {
-            name: calc.calculate_similarity(fp, SCENARIO_LIBRARY[name]).similarity
-            for name in phoenix_members
-        }
-        closest = max(scores, key=lambda k: scores[k])
-        active = {k: v for k, v in scores.items() if v >= PHOENIX_CORE_SCORE}
-        result["marauder_trajectory"] = {
-            "closest": closest,
-            "scores": {k: round(v, 4) for k, v in scores.items()},
-            "phoenix_active": list(active.keys()),
-            "phoenix_strength": round(len(active) / len(phoenix_members), 4),
-            "trajectory_length": len(trajectory),
-        }
-
-    elif payload.operator_state == "MAP":
-        # Full map view for the API
-        trajectory = read_trajectory(limit=10)
-        scores = {
-            name: calc.calculate_similarity(fp, scenario).similarity
-            for name, scenario in SCENARIO_LIBRARY.items()
-        }
-        moony_high = scores.get("MOONY", 0.0) > MOONY_SCORE_THRESHOLD
-        tonks_high = scores.get("TONKS", 0.0) > TONKS_SCORE_THRESHOLD
-        result["marauder_trajectory"] = {
-            "all_scores": {k: round(v, 4) for k, v in scores.items()},
-            "trajectory": trajectory,
-            "black_scope_active": moony_high and tonks_high,
-        }
+        result.update(apply_operator_state(calc, fp, payload.operator_state, trajectory))
 
     # Add narrative story
     closest = None
