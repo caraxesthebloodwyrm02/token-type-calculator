@@ -74,7 +74,7 @@ Full lifecycle (branching, pre-PR gates, review, merge, post-merge): [PR_OPERATI
 | `scripts/sync_dashboard_constants.py` | Writes `dashboard_constants.generated.js` from `canonical_library.py` |
 | `dashboard_constants.generated.js` | Browser `TOKEN_*`, zones, `SCENARIO_LIBRARY` (generated; do not hand-edit) |
 
-Reference docs: [DESIGN.md](DESIGN.md) · [ROUTINE.md](ROUTINE.md) · [WATERFALL.md](WATERFALL.md)
+Reference docs: [DESIGN.md](DESIGN.md) · [ROUTINE.md](ROUTINE.md) · [docs/lore/WATERFALL.md](docs/lore/WATERFALL.md)
 
 ---
 

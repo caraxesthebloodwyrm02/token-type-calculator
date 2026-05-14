@@ -116,7 +116,7 @@ def expecto_patronum(exchange: Exchange, anchor: BondMemory) -> ProtectiveForm |
 
 # ---------------------------------------------------------------------------
 # DARK MARK GATES — module-level functions, never embedded in weight arithmetic
-# Per TRANSFIGURATION.md §5 note 3: dominant_type is mechanical (weight-based),
+# Per docs/lore/TRANSFIGURATION.md §5 note 3: dominant_type is mechanical (weight-based),
 # not semantic. All Dark Mark / freedom logic lives here, not in compute().
 # ---------------------------------------------------------------------------
 

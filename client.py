@@ -4,7 +4,7 @@ Day 4 of ROUTINE.md: making the calls. Posts a batch of 50 generated scenarios
 to /compute, persists what comes back (the API handles storage), and prints a
 "NO-TAKE events counted" summary report.
 
-See AUTHOR.md for the contract:
+See docs/lore/AUTHOR.md for the contract:
   - build_scenarios() returns exactly 50 scenarios.
   - Of those, exactly 15 are canonical no-take (cost=1.0, value=0.0).
   - post_compute returns dict on 200, None on 400/500, sys.exit(1) on
