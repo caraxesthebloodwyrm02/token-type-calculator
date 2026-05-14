@@ -1,19 +1,20 @@
-import sys
 import argparse
+import sys
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
 from calculator import TokenTypeCalculator, draw_dashboard, run_tui_queries
 from scenarios import (
+    run_moony_scenario,
     run_not_scenario,
     run_relief_scenario,
-    run_moony_scenario,
-    run_ssseverus_scenario,
     run_search_scenario,
+    run_ssseverus_scenario,
 )
-from wikidex import Wikidex
 from storage import init_db, save_request
+from wikidex import Wikidex
 
 
 def run_help_scenario():

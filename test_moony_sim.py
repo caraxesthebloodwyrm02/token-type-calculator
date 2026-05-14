@@ -1,4 +1,3 @@
-from calculator import TokenTypeCalculator, SCENARIO_LIBRARY
 from main import run_moony_scenario
 
 calc = run_moony_scenario()

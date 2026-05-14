@@ -1,10 +1,8 @@
 """Tests for the Dark Mark system: is_dark_mark_cast, check_dark_mark,
 check_imperius_compromise, and the DarkMark dataclass.
 """
-import pytest
-from design import Exchange, DarkMark, is_dark_mark_cast
-from calculator import check_dark_mark, check_imperius_compromise, TOKEN_WEIGHTS, TOKEN_COLORS
-
+from calculator import TOKEN_COLORS, TOKEN_WEIGHTS, check_dark_mark, check_imperius_compromise
+from design import DarkMark, Exchange, is_dark_mark_cast
 
 # ── is_dark_mark_cast ─────────────────────────────────────────────────────────
 

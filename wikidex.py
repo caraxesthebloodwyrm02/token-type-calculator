@@ -1,15 +1,11 @@
 import os
-import sys
-import re
-from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
-from rich.console import Console
-from rich.text import Text
-from rich.panel import Panel
+from dataclasses import dataclass
 
-# Reuse existing patterns
+from rich.console import Console
+from rich.panel import Panel
+from rich.text import Text
+
 from design import AudioSignal
-from calculator import TOKEN_WEIGHTS, TOKEN_LABELS
 
 # 9 Cognition Patterns
 COGNITION_PATTERNS = [
@@ -30,9 +26,9 @@ class WikidexEntry:
 
 class Wikidex:
     def __init__(self):
-        self.entries: List[WikidexEntry] = []
+        self.entries: list[WikidexEntry] = []
         self.console = Console()
-        self.current_scan_path: Optional[str] = None
+        self.current_scan_path: str | None = None
 
     def get_symbol(self, entry_type: str) -> str:
         symbols = {
@@ -93,19 +89,21 @@ class Wikidex:
                 # Only top level for now or specific depth?
                 # Let's do top level for habitat view
                 for d in dirs:
-                    if d.startswith('.') or d == "__pycache__": continue
+                    if d.startswith('.') or d == "__pycache__":
+                        continue
                     self.entries.append(WikidexEntry(
                         id=str(idx).zfill(3),
                         name=d,
                         category=self.categorize(d, True),
                         entry_type="habitat",
                         weight=0.0,
-                        summary=f"A digital habitat containing multiple sub-elements.",
+                        summary="A digital habitat containing multiple sub-elements.",
                         path=os.path.join(root, d)
                     ))
                     idx += 1
                 for f in files:
-                    if f.startswith('.') or f.endswith('.pyc'): continue
+                    if f.startswith('.') or f.endswith('.pyc'):
+                        continue
                     fpath = os.path.join(root, f)
                     self.entries.append(WikidexEntry(
                         id=str(idx).zfill(3),
@@ -113,7 +111,7 @@ class Wikidex:
                         category=self.categorize(f, False),
                         entry_type="specimen",
                         weight=round(os.path.getsize(fpath) / 1024, 2),
-                        summary=f"A digital specimen found within the habitat.",
+                        summary="A digital specimen found within the habitat.",
                         path=fpath
                     ))
                     idx += 1
@@ -176,7 +174,7 @@ class Wikidex:
             is_anomaly=False
         )
 
-        self.console.print(f"[bold magenta]Johto Voice Summary:[/]")
+        self.console.print("[bold magenta]Johto Voice Summary:[/]")
         self.console.print(f"[italic]\"{template}\"[/]")
         return audio
 
@@ -186,13 +184,9 @@ class Wikidex:
             self.console.print("[red]Error: /home/irfankabir/CLAUDE.md not found.[/]")
             return False
 
-        with open(claude_md_path, 'r') as f:
+        with open(claude_md_path) as f:
             content = f.read()
 
-        current_repo_path = "/home/irfankabir/lab/token-type-calculator"
-        # Check if this path or its parts exist in CLAUDE.md as a registered path
-        # In a real scenario, we'd check against a specific section.
-        # For now, we'll look for the path string.
 
         if "token-type-calculator" not in content:
             self.console.print(Panel(

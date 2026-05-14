@@ -3,9 +3,7 @@
 Verifies fingerprint coordinates, dominant_type, movement, and is_no_take
 for each new character. Does not test engine computation — just library integrity.
 """
-import pytest
 from calculator import SCENARIO_LIBRARY
-
 
 # ── Dark Mark Roster ──────────────────────────────────────────────────────────
 

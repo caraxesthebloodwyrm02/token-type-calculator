@@ -7,8 +7,6 @@ to emit `dashboard_constants.generated.js`.
 Scenario narratives and design rationale live in DESIGN.md.
 """
 
-from typing import Dict
-
 from design import Fingerprint
 
 TOKEN_COLORS = {
@@ -70,7 +68,7 @@ ZONE_COLORS = {
 
 STRENGTH_MULTIPLIER = 2.0
 
-SCENARIO_LIBRARY: Dict[str, Fingerprint] = {
+SCENARIO_LIBRARY: dict[str, Fingerprint] = {
     "RELIEF": Fingerprint(pressure=0.3, clarity=1.0, movement="DRIFT", dominant_type="TRANSISTOR", is_no_take=False),
     "NOT": Fingerprint(pressure=1.0, clarity=0.0, movement="TURBULENT", dominant_type="BIO_SIGNAL", is_no_take=True),
     "VIBE_CHECK": Fingerprint(pressure=0.2, clarity=0.8, movement="DRIFT", dominant_type="EXPRESSIVE", is_no_take=False),

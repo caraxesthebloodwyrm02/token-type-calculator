@@ -1,8 +1,6 @@
 import json
 import sqlite3
 
-import pytest
-
 from calculator import TokenTypeCalculator
 from storage import init_db, save_request
 

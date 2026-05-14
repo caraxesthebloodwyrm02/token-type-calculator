@@ -1,22 +1,13 @@
+import copy
 import math
-import sys
-from typing import Set, Dict, Any, List
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
-from rich.text import Text
-from rich.layout import Layout
-from rich import box
+from typing import Any
 
-from design import (
-    QUEEN_FACE, KING_FACE, AIR, Exchange,
-    air_from_exchange, AudioSignal, FIDELITY_FLOOR,
-    Fingerprint, ComparisonReport, should_reject,
-    SIMILARITY_MATCH_THRESHOLD, NO_TAKE_DRIFT_PENALTY,
-    BondMemory, ProtectiveForm,
-    DarkMark, is_dark_mark_cast,
-    DARK_MARK_THRESHOLD, MORSMORDRE_SCOPE_MIN, REGULUS_REDEMPTION_FLOOR,
-)
+from rich import box
+from rich.console import Console
+from rich.layout import Layout
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
 
 from canonical_library import (
     SCENARIO_LIBRARY,
@@ -26,8 +17,25 @@ from canonical_library import (
     TOKEN_WEIGHTS,
     ZONE_COLORS,
 )
+from design import (
+    FIDELITY_FLOOR,
+    KING_FACE,
+    NO_TAKE_DRIFT_PENALTY,
+    QUEEN_FACE,
+    SIMILARITY_MATCH_THRESHOLD,
+    AudioSignal,
+    BondMemory,
+    ComparisonReport,
+    DarkMark,
+    Exchange,
+    Fingerprint,
+    ProtectiveForm,
+    air_from_exchange,
+    is_dark_mark_cast,
+    should_reject,
+)
 
-TUI_ANCHOR: Dict[str, Any] = {
+TUI_ANCHOR: dict[str, Any] = {
     "anchor": "TUI",
     "goal": "create()/def(\"infer\")",
     "infer": "creator always remembers, creator can communicate regardless and beyond constraints",
@@ -41,7 +49,7 @@ TUI_ANCHOR: Dict[str, Any] = {
 }
 
 
-def query_tui_anchor(prompt: str) -> Dict[str, Any]:
+def query_tui_anchor(prompt: str) -> dict[str, Any]:
     normalized = prompt.strip().lower()
     if normalized in {"what do i remember?", "what do i remember"}:
         result = TUI_ANCHOR["operator_note"]
@@ -62,7 +70,7 @@ def query_tui_anchor(prompt: str) -> Dict[str, Any]:
     }
 
 
-def run_tui_queries() -> Dict[str, Any]:
+def run_tui_queries() -> dict[str, Any]:
     prompts = [
         "what do i remember?",
         "when did things lift?",
@@ -151,7 +159,7 @@ def check_freedom_signal(active_tokens: set, exchange: Exchange) -> bool:
 
 class TokenTypeCalculator:
     def __init__(self):
-        self.active_tokens: Set[str] = {'transistor'}
+        self.active_tokens: set[str] = {'transistor'}
         self.zone: str = 'buildup'
         # When True (default), compute() maps params["step"] → zone (CLI/TUI/dashboard).
         # When False, self.zone is authoritative (HTTP API and presets that set zone explicitly).
@@ -189,7 +197,7 @@ class TokenTypeCalculator:
             # No anomaly, no drift.
             return 0.0
 
-    def semantic_search(self, target: Fingerprint) -> Dict[str, Any]:
+    def semantic_search(self, target: Fingerprint) -> dict[str, Any]:
         """Find the closest scenario in the library."""
         best_match = None
         highest_similarity = -1.0
@@ -238,11 +246,15 @@ class TokenTypeCalculator:
 
         # Qualitative analysis
         shifts = []
-        if a.pressure > b.pressure + 0.1: shifts.append("Pressure rising")
-        elif a.pressure < b.pressure - 0.1: shifts.append("Pressure dropping")
+        if a.pressure > b.pressure + 0.1:
+            shifts.append("Pressure rising")
+        elif a.pressure < b.pressure - 0.1:
+            shifts.append("Pressure dropping")
 
-        if a.clarity > b.clarity + 0.1: shifts.append("Clarity increasing")
-        elif a.clarity < b.clarity - 0.1: shifts.append("Clarity decreasing")
+        if a.clarity > b.clarity + 0.1:
+            shifts.append("Clarity increasing")
+        elif a.clarity < b.clarity - 0.1:
+            shifts.append("Clarity decreasing")
 
         if a.movement != b.movement:
             shifts.append(f"Shift to {a.movement.lower()}")
@@ -262,7 +274,7 @@ class TokenTypeCalculator:
             is_match=similarity >= SIMILARITY_MATCH_THRESHOLD
         )
 
-    def compute(self) -> Dict[str, Any]:
+    def compute(self) -> dict[str, Any]:
         if self.sync_zone_from_step:
             step = self.params.get('step', 43)
             if 0 <= step <= 43:
@@ -309,11 +321,12 @@ class TokenTypeCalculator:
             fired_val = '—'
             fired_color = '#606080'
             
-        # Boundary Status: NOT() logic
         exchange_obj = Exchange(
             attention_cost=self.params['engagement_cost'],
             received_clarity=self.params['service_value']
         )
+
+        # Boundary Status: NOT() logic
         is_no_take = should_reject(exchange_obj)
         boundary_status = 'NO-TAKE (NOT)' if is_no_take else 'OPEN'
         boundary_color = TOKEN_COLORS['anomaly'] if is_no_take else TOKEN_COLORS['decorated']
@@ -383,11 +396,6 @@ class TokenTypeCalculator:
         transform_rate = self.params['momentum'] * self.params['score'] * (1 - anomaly_drift)
         stability = 'HIGH' if strength > 0.6 else ('MED' if strength > 0.3 else 'LOW')
 
-        # Air Element Logic
-        exchange_obj = Exchange(
-            attention_cost=self.params['engagement_cost'],
-            received_clarity=self.params['service_value']
-        )
         air = air_from_exchange(exchange_obj)
         air_movement = air.movement.upper()
         air_clarity = air.clarity
@@ -402,10 +410,8 @@ class TokenTypeCalculator:
         else:
             air_color = TOKEN_COLORS['transistor']
 
-        # Visual Bridge: Face selection
-        # Queen: expressive/ambient; King: intentional/bio-signal/anomaly
         is_expressive = dominant in ['transistor', 'decorated', 'ambient']
-        face = QUEEN_FACE if is_expressive else KING_FACE
+        face = copy.deepcopy(QUEEN_FACE if is_expressive else KING_FACE)
         face.shader.intensity = strength
 
         # Audio Bridge
@@ -478,7 +484,9 @@ def draw_dashboard(calc: TokenTypeCalculator):
     out_table.add_row("Effective Type", f"[{state['dom_color']}]{TOKEN_LABELS[state['dominant']]}[/]")
     out_table.add_row("Gate State", f"[{state['gate_color']}]{state['gate_state']}[/]")
     out_table.add_row("Fired Value", f"[{state['fired_color']}]{state['fired_val']}[/]")
-    out_table.add_row("Anomaly", f"[{TOKEN_COLORS['anomaly'] if state['is_anomaly'] else 'dim'}]" + ("TRUE" if state['is_anomaly'] else "FALSE") + "[/]")
+    anom_color = TOKEN_COLORS['anomaly'] if state['is_anomaly'] else 'dim'
+    anom_label = "TRUE" if state['is_anomaly'] else "FALSE"
+    out_table.add_row("Anomaly", f"[{anom_color}]{anom_label}[/]")
     out_table.add_row("Boundary", f"[{state['boundary_color']}]{state['boundary_status']}[/]")
     out_table.add_row("Signal Strength", f"[{state['dom_color']}]{state['strength']:.3f}[/]")
     out_table.add_row("Zone", f"[{ZONE_COLORS[calc.zone]}]{calc.zone.upper()}[/]")
@@ -489,8 +497,18 @@ def draw_dashboard(calc: TokenTypeCalculator):
     stats_table.add_column("Value", style="bold")
     
     active_labels = "+".join([TOKEN_LABELS[t].split('·')[0].strip() for t in calc.active_tokens])
-    stab_color = TOKEN_COLORS['decorated'] if state['stability'] == 'HIGH' else (TOKEN_COLORS['gate-on'] if state['stability'] == 'MED' else TOKEN_COLORS['anomaly'])
-    rate_color = TOKEN_COLORS['gate-on'] if state['transform_rate'] > 0.7 else (TOKEN_COLORS['ambient'] if state['transform_rate'] > 0.4 else TOKEN_COLORS['anomaly'])
+    if state['stability'] == 'HIGH':
+        stab_color = TOKEN_COLORS['decorated']
+    elif state['stability'] == 'MED':
+        stab_color = TOKEN_COLORS['gate-on']
+    else:
+        stab_color = TOKEN_COLORS['anomaly']
+    if state['transform_rate'] > 0.7:
+        rate_color = TOKEN_COLORS['gate-on']
+    elif state['transform_rate'] > 0.4:
+        rate_color = TOKEN_COLORS['ambient']
+    else:
+        rate_color = TOKEN_COLORS['anomaly']
 
     stats_table.add_row("Active Types", str(len(calc.active_tokens)))
     stats_table.add_row("Total Weight", f"{state['total_weight']:.2f}")

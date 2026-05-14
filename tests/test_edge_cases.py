@@ -1,13 +1,14 @@
 """Edge case tests: Patronus + DarkMark coordinate exclusion, SIRIUS transition
 similarity, token arithmetic with new tokens, imperius gate state integration.
 """
-import pytest
-from design import Exchange, BondMemory, is_dark_mark_cast
 from calculator import (
-    TokenTypeCalculator, SCENARIO_LIBRARY, TOKEN_WEIGHTS,
-    expecto_patronum, check_dark_mark, check_imperius_compromise,
+    SCENARIO_LIBRARY,
+    TOKEN_WEIGHTS,
+    TokenTypeCalculator,
+    check_dark_mark,
+    expecto_patronum,
 )
-
+from design import BondMemory, Exchange
 
 # ── Patronus / DarkMark coordinate exclusion ──────────────────────────────────
 

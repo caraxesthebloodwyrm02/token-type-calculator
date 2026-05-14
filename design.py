@@ -8,11 +8,11 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
-from typing import Literal, Optional
+from enum import StrEnum
+from typing import Literal
 
 
-class TokenType(str, Enum):
+class TokenType(StrEnum):
     EXPRESSIVE = "EXPRESSIVE"
     INTENTIONAL = "INTENTIONAL"
     BOLD = "BOLD"

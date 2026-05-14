@@ -1,13 +1,13 @@
 """Tests for protection charms: PROTEGO weight, freedom-signal override,
 MCGONAGALL + DOBBY scenario integrity, and the compute() integration.
 """
-import pytest
-from design import Exchange
 from calculator import (
-    TokenTypeCalculator, TOKEN_WEIGHTS, TOKEN_COLORS,
+    TOKEN_COLORS,
+    TOKEN_WEIGHTS,
+    TokenTypeCalculator,
     check_freedom_signal,
 )
-
+from design import Exchange
 
 # ── PROTEGO / freedom-signal token registry ───────────────────────────────────
 

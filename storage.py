@@ -16,7 +16,7 @@ import dataclasses
 import json
 import os
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 DEFAULT_DB_PATH = os.environ.get("TOKEN_CALC_DB", "token_calc.db")
@@ -83,6 +83,7 @@ _INDEX_NO_TAKE = "CREATE INDEX IF NOT EXISTS idx_compute_requests_no_take ON com
 def init_db(db_path: str = DEFAULT_DB_PATH) -> None:
     """Create the compute_requests table if missing. Idempotent."""
     with sqlite3.connect(db_path) as conn:
+        conn.execute("PRAGMA journal_mode=WAL;")
         conn.executescript(_SCHEMA)
         conn.execute(_INDEX_TIMESTAMP)
         conn.execute(_INDEX_NO_TAKE)
@@ -121,7 +122,7 @@ def save_request(
     Those are normalized through dataclasses.asdict before being written to
     result_json so the row stays self-contained.
     """
-    timestamp_utc = datetime.now(timezone.utc).isoformat()
+    timestamp_utc = datetime.now(UTC).isoformat()
     active_tokens = _coerce_active_tokens(params)
 
     # Surface signal — kept as real columns so trajectory queries don't have

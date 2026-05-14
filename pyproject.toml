@@ -24,3 +24,9 @@ target-version = "py314"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
 ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"canonical_library.py" = ["E501"]
+"marauders_map.py" = ["E501"]
+"main.py" = ["E501"]
+"wikidex.py" = ["E501"]

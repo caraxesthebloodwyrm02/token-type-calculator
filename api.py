@@ -44,8 +44,8 @@ class ComputeRequest(BaseModel):
 
 class VisualStateModel(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    face: object
-    air: object
+    face: dict[str, Any]
+    air: dict[str, Any]
 
 
 class AudioSignalModel(BaseModel):
@@ -100,6 +100,8 @@ class ComputeResponse(BaseModel):
     paths: list[str] | None = None
     marauder_trajectory: dict | None = None
     patronus_state: dict | None = None
+    dark_mark_state: dict | None = None
+    freedom_override: bool = False
 
 
 def verify_api_key(x_api_key: str | None = Header(None)) -> str | None:
@@ -305,23 +307,19 @@ def compute(payload: ComputeRequest) -> dict:
 
 @app.post("/compare", response_model=CompareResponse, dependencies=[Depends(verify_api_key)])
 def compare(payload: CompareRequest) -> dict:
-    calc = TokenTypeCalculator()
-
-    # Compute A
     calc_a = TokenTypeCalculator()
     _apply_request(calc_a, payload.a)
     t0 = time.perf_counter()
     res_a = calc_a.compute()
     save_request("/compare", payload.a.model_dump(), res_a, (time.perf_counter() - t0) * 1000)
 
-    # Compute B
     calc_b = TokenTypeCalculator()
     _apply_request(calc_b, payload.b)
     t0 = time.perf_counter()
     res_b = calc_b.compute()
     save_request("/compare", payload.b.model_dump(), res_b, (time.perf_counter() - t0) * 1000)
 
-    report = calc.calculate_similarity(res_a['fingerprint'], res_b['fingerprint'])
+    report = calc_a.calculate_similarity(res_a['fingerprint'], res_b['fingerprint'])
 
     # Story for comparisons is the qualitative shift
     res_a["story"] = narrate_shift(res_a)

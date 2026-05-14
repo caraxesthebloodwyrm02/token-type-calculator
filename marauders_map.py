@@ -1,13 +1,16 @@
-import sys
-import os
-from typing import Dict, List, Any
-from calculator import TokenTypeCalculator, SCENARIO_LIBRARY
-from storage import read_trajectory, init_db
+from calculator import SCENARIO_LIBRARY, TokenTypeCalculator
 from design import (
-    Fingerprint, MOONY_SCORE_THRESHOLD, PRONGS_ACCOMPANIMENT_FLOOR,
-    SSSEVERUS_CLARITY_GAP, PHOENIX_CORE_SCORE,
-    DARK_MARK_THRESHOLD, MORSMORDRE_SCOPE_MIN, REGULUS_REDEMPTION_FLOOR,
+    DARK_MARK_THRESHOLD,
+    MOONY_SCORE_THRESHOLD,
+    MORSMORDRE_SCOPE_MIN,
+    PHOENIX_CORE_SCORE,
+    PRONGS_ACCOMPANIMENT_FLOOR,
+    REGULUS_REDEMPTION_FLOOR,
+    SSSEVERUS_CLARITY_GAP,
+    Fingerprint,
 )
+from storage import init_db, read_trajectory
+
 
 def generate_marauders_map() -> str:
     init_db()  # Ensure database and tables exist
@@ -96,7 +99,6 @@ def generate_marauders_map() -> str:
     output.append("DEATH EATER PROXIMITY:")
     voldemort_score = death_eater_scores.get("VOLDEMORT", 0.0)
     bellatrix_score = death_eater_scores.get("BELLATRIX", 0.0)
-    regulus_score = death_eater_scores.get("REGULUS", 0.0)
     for m in death_eater_roster:
         score = death_eater_scores[m]
         bar = "█" * int(score * 10) + "░" * (10 - int(score * 10))
@@ -135,7 +137,7 @@ def generate_marauders_map() -> str:
     accompanied = moony_score > MOONY_SCORE_THRESHOLD and prongs_score > PRONGS_ACCOMPANIMENT_FLOOR
 
     if accompanied:
-        output.append(f"\nMOONY: accompanied: true")
+        output.append("\nMOONY: accompanied: true")
 
     return "\n".join(output)
 
