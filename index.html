@@ -474,82 +474,7 @@
   <!-- LEFT: Token Types -->
   <div class="panel">
     <div class="panel-title">Token Types</div>
-    <div class="token-grid" id="tokenGrid">
-      <div class="token-card active" data-type="transistor" style="--card-color: var(--transistor)" onclick="toggleToken(this)">
-        <div class="token-dot"></div>
-        <div class="token-label">TRANSISTOR</div>
-        <div class="token-weight" id="w-transistor">1.00</div>
-        <div class="token-toggle"></div>
-      </div>
-      <div class="token-card" data-type="decorated" style="--card-color: var(--decorated)" onclick="toggleToken(this)">
-        <div class="token-dot"></div>
-        <div class="token-label">DECORATED_VAR</div>
-        <div class="token-weight" id="w-decorated">0.00</div>
-        <div class="token-toggle"></div>
-      </div>
-      <div class="token-card" data-type="ambient" style="--card-color: var(--ambient)" onclick="toggleToken(this)">
-        <div class="token-dot"></div>
-        <div class="token-label">AMBIENT</div>
-        <div class="token-weight" id="w-ambient">0.00</div>
-        <div class="token-toggle"></div>
-      </div>
-      <div class="token-card" data-type="anomaly" style="--card-color: var(--anomaly)" onclick="toggleToken(this)">
-        <div class="token-dot"></div>
-        <div class="token-label">ANOMALY</div>
-        <div class="token-weight" id="w-anomaly">0.00</div>
-        <div class="token-toggle"></div>
-      </div>
-      <div class="token-card" data-type="gate-on" style="--card-color: var(--gate-on)" onclick="toggleToken(this)">
-        <div class="token-dot"></div>
-        <div class="token-label">GATE · ARMED</div>
-        <div class="token-weight" id="w-gate-on">0.00</div>
-        <div class="token-toggle"></div>
-      </div>
-      <div class="token-card" data-type="gate-off" style="--card-color: var(--gate-off)" onclick="toggleToken(this)">
-        <div class="token-dot"></div>
-        <div class="token-label">GATE · UNARMED</div>
-        <div class="token-weight" id="w-gate-off">0.00</div>
-        <div class="token-toggle"></div>
-      </div>
-      <div class="token-card" data-type="bio-signal" style="--card-color: var(--bio-signal)" onclick="toggleToken(this)">
-        <div class="token-dot"></div>
-        <div class="token-label">BIO_SIGNAL</div>
-        <div class="token-weight" id="w-bio-signal">0.00</div>
-        <div class="token-toggle"></div>
-      </div>
-      <!-- Dark side tokens -->
-      <div class="token-card" data-type="morsmordre" style="--card-color: var(--morsmordre)" onclick="toggleToken(this)">
-        <div class="token-dot"></div>
-        <div class="token-label">MORSMORDRE</div>
-        <div class="token-weight" id="w-morsmordre">0.00</div>
-        <div class="token-toggle"></div>
-      </div>
-      <div class="token-card" data-type="legilimens" style="--card-color: var(--legilimens)" onclick="toggleToken(this)">
-        <div class="token-dot"></div>
-        <div class="token-label">LEGILIMENS</div>
-        <div class="token-weight" id="w-legilimens">0.00</div>
-        <div class="token-toggle"></div>
-      </div>
-      <div class="token-card" data-type="imperius" style="--card-color: var(--imperius)" onclick="toggleToken(this)">
-        <div class="token-dot"></div>
-        <div class="token-label">IMPERIUS</div>
-        <div class="token-weight" id="w-imperius">0.00</div>
-        <div class="token-toggle"></div>
-      </div>
-      <!-- Protection / freedom tokens -->
-      <div class="token-card" data-type="protego" style="--card-color: var(--protego)" onclick="toggleToken(this)">
-        <div class="token-dot"></div>
-        <div class="token-label">PROTEGO</div>
-        <div class="token-weight" id="w-protego">0.00</div>
-        <div class="token-toggle"></div>
-      </div>
-      <div class="token-card" data-type="freedom-signal" style="--card-color: var(--freedom-signal)" onclick="toggleToken(this)">
-        <div class="token-dot"></div>
-        <div class="token-label">FREEDOM·SIGNAL</div>
-        <div class="token-weight" id="w-freedom-signal">0.00</div>
-        <div class="token-toggle"></div>
-      </div>
-    </div>
+    <div class="token-grid" id="tokenGrid"></div>
 
     <div style="margin-top:18px">
       <div class="panel-title">Zone</div>
@@ -857,6 +782,10 @@
 
 <script src="dashboard_constants.generated.js"></script>
 <script>
+// Parity note: imperius COMPROMISED gate logic and freedom-signal override exist in
+// calculator.py / API only — not replicated in this browser engine (docs/lore/AUTHOR.md).
+
+// Theme palette overrides (muted vs canonical brights in dashboard_constants.generated.js)
 Object.assign(TOKEN_COLORS, {
   "transistor":"#48a8c8","decorated":"#4e9e4e","ambient":"#8070a8",
   "anomaly":"#c04848","gate-on":"#c8a040","gate-off":"#484860",
@@ -864,24 +793,32 @@ Object.assign(TOKEN_COLORS, {
   "imperius":"#382868","protego":"#7878a0","freedom-signal":"#c08050"
 });
 Object.assign(ZONE_COLORS, {"buildup":"#4e9e4e","silence":"#282838","drop":"#c06030"});
-</script>
-<script>
-// Parity note: imperius COMPROMISED gate logic and freedom-signal override exist in
-// calculator.py / API only — not replicated in this browser engine (docs/lore/AUTHOR.md).
 
+// ── State ──
 let activeTokens = new Set(['transistor']);
 let currentZone = 'buildup';
 let currentLayer = 'Foundation';
 let params = { intensity: 0.69, step: 43, momentum: 1.0, score: 0.81, cycle: 60, drift: 0.08, engagement_cost: 0.0, service_value: 0.0 };
 
+// ── Token grid builder — generated from TOKEN_WEIGHTS / TOKEN_LABELS / TOKEN_COLORS ──
+function buildTokenGrid() {
+  document.getElementById('tokenGrid').innerHTML = Object.keys(TOKEN_WEIGHTS).map(type => {
+    const active = type === 'transistor';
+    const weight = active ? TOKEN_WEIGHTS[type].toFixed(2) : '0.00';
+    return `<div class="token-card${active ? ' active' : ''}" data-type="${type}" style="--card-color:${TOKEN_COLORS[type]}" onclick="toggleToken(this)">
+  <div class="token-dot"></div>
+  <div class="token-label">${TOKEN_LABELS[type]}</div>
+  <div class="token-weight" id="w-${type}">${weight}</div>
+  <div class="token-toggle"></div>
+</div>`;
+  }).join('');
+}
+
+// ── Event handlers ──
 function updateSlider(name, val, color, max = 100) {
-  const pct = (val / max) * 100;
-  document.getElementById('f-' + name).style.width = pct + '%';
+  document.getElementById('f-' + name).style.width = ((val / max) * 100) + '%';
   document.getElementById('f-' + name).style.setProperty('--slider-color', color);
-
-  let display = max === 100 ? (val / 100).toFixed(2) : String(val);
-  document.getElementById('v-' + name).textContent = display;
-
+  document.getElementById('v-' + name).textContent = max === 100 ? (val / 100).toFixed(2) : String(val);
   params[name] = max === 100 ? val / 100 : parseInt(val);
   compute();
 }
@@ -889,7 +826,7 @@ function updateSlider(name, val, color, max = 100) {
 function toggleToken(card) {
   const type = card.dataset.type;
   if (activeTokens.has(type)) {
-    if (activeTokens.size === 1) return; // keep at least one active
+    if (activeTokens.size === 1) return;
     activeTokens.delete(type);
     card.classList.remove('active');
   } else {
@@ -901,12 +838,9 @@ function toggleToken(card) {
 
 function setZone(btn) {
   currentZone = btn.dataset.zone;
-  // Sync step with selected zone
   if (currentZone === 'buildup') params.step = 20;
   else if (currentZone === 'silence') params.step = 45;
-  else if (currentZone === 'drop') params.step = 60;
-
-  // Update step slider UI
+  else params.step = 60;
   const stepSlider = document.getElementById('s-step');
   if (stepSlider) {
     stepSlider.value = params.step;
@@ -922,262 +856,231 @@ function setLayer(btn) {
   compute();
 }
 
+// ── Pure computation ──
 function calculateSimilarity(a, b) {
   const w_p = 1.0, w_c = 1.0, w_dt = 0.5;
-  const type_diff = (a.dominant_type === b.dominant_type) ? 0.0 : 1.0;
+  const type_diff = a.dominant_type === b.dominant_type ? 0.0 : 1.0;
   const dist = Math.sqrt(
     w_p * Math.pow(a.pressure - b.pressure, 2) +
     w_c * Math.pow(a.clarity - b.clarity, 2) +
     w_dt * type_diff
   );
-  const max_dist = Math.sqrt(w_p + w_c + w_dt);
-  return 1.0 - (dist / max_dist);
+  return 1.0 - dist / Math.sqrt(w_p + w_c + w_dt);
 }
 
 function semanticSearch(target) {
-  let bestMatch = null;
-  let highestSimilarity = -1.0;
-  let bestScenario = "NONE";
-
+  let highestSimilarity = -1.0, bestScenario = 'NONE';
   for (const [name, scenario] of Object.entries(SCENARIO_LIBRARY)) {
     const similarity = calculateSimilarity(target, scenario);
-    if (similarity > highestSimilarity) {
-      highestSimilarity = similarity;
-      bestScenario = name;
-    }
+    if (similarity > highestSimilarity) { highestSimilarity = similarity; bestScenario = name; }
   }
   return { scenario: bestScenario, similarity: highestSimilarity };
 }
 
-function compute() {
-  const types = Array.from(activeTokens);
-  const totalWeight = types.reduce((s, t) => s + TOKEN_WEIGHTS[t], 0);
+function deriveZone(step) {
+  if (step <= 43) return 'buildup';
+  if (step <= 47) return 'silence';
+  return 'drop';
+}
 
-  // Sync Zone with Step Position
-  if (params.step <= 43) currentZone = 'buildup';
-  else if (params.step <= 47) currentZone = 'silence';
-  else currentZone = 'drop';
+function deriveGate() {
+  const hasGateOn = activeTokens.has('gate-on');
+  const hasGateOff = activeTokens.has('gate-off');
+  const gateState = hasGateOff && !hasGateOn ? 'UNARMED' : hasGateOn ? 'ARMED' : 'N/A';
+  const gateColor = gateState === 'ARMED' ? TOKEN_COLORS['gate-on'] : gateState === 'UNARMED' ? TOKEN_COLORS['gate-off'] : '#606080';
+  const firedValue = hasGateOff && !hasGateOn ? '0' : activeTokens.has('transistor') ? '1' : '—';
+  return { gateState, gateColor, firedValue };
+}
 
-  // Update Zone Button UI
-  document.querySelectorAll('.zone-btn').forEach(b => {
-    if (b.dataset.zone === currentZone) b.classList.add('active');
-    else b.classList.remove('active');
-  });
+function deriveBoundary() {
+  const isNoTake = params.engagement_cost > 0 && params.service_value === 0;
+  return {
+    isNoTake,
+    boundaryStatus: isNoTake ? 'NO-TAKE (NOT)' : 'OPEN',
+    boundaryColor: isNoTake ? TOKEN_COLORS['anomaly'] : TOKEN_COLORS['decorated'],
+  };
+}
 
-  // Update weight displays
+function deriveAnomaly(isNoTake, gateState) {
+  const inSilence = currentZone === 'silence';
+  const unarmedFire = activeTokens.has('transistor') && gateState === 'UNARMED';
+  const isAnomaly = inSilence || unarmedFire || activeTokens.has('anomaly') || isNoTake;
+  const anomalyDrift = isAnomaly ? Math.max(params.drift, isNoTake ? 0.8 : 0.0) : 0;
+  return { isAnomaly, anomalyDrift };
+}
+
+function deriveStrength(totalWeight, anomalyDrift) {
+  const zoneMultiplier = currentZone === 'buildup' ? params.intensity : currentZone === 'drop' ? 1.0 : 0.0;
+  return Math.min(1, (totalWeight / Object.keys(TOKEN_WEIGHTS).length) * params.momentum * params.score * zoneMultiplier * STRENGTH_MULTIPLIER * (1 - anomalyDrift * 0.5)).toFixed(3);
+}
+
+function deriveAirElement() {
+  const engagement = params.engagement_cost;
+  const clarity = engagement > 0 ? Math.min(1.0, params.service_value / engagement) : 1.0;
+  const pressure = Math.min(1.0, engagement);
+  let movement = 'DRIFT';
+  if (pressure === 0.0) movement = 'STILL';
+  else if (clarity < 0.2) movement = 'TURBULENT';
+  else if (clarity < 0.6) movement = 'GUST';
+  return { pressure, clarity, movement };
+}
+
+// ── DOM updates ──
+function syncZoneUI(zone) {
+  document.querySelectorAll('.zone-btn').forEach(b => b.classList.toggle('active', b.dataset.zone === zone));
   Object.keys(TOKEN_WEIGHTS).forEach(t => {
     const el = document.getElementById('w-' + t);
     if (el) el.textContent = activeTokens.has(t) ? TOKEN_WEIGHTS[t].toFixed(2) : '0.00';
   });
+}
 
-  // Composite bar
-  const bar = document.getElementById('compositeBar');
-  bar.innerHTML = types.map(t => {
+function renderCompositeBar(types, totalWeight) {
+  document.getElementById('compositeBar').innerHTML = types.map(t => {
     const pct = (TOKEN_WEIGHTS[t] / totalWeight) * 100;
     const label = pct > 12 ? TOKEN_LABELS[t].split('·')[0].trim().substring(0, 6) : '';
     return `<div class="composite-seg" style="width:${pct}%;background:${TOKEN_COLORS[t]};box-shadow:inset 0 0 8px rgba(0,0,0,0.4)">${label}</div>`;
   }).join('');
+}
 
-  // Effective type (highest weight among active)
-  const dominant = types.reduce((a, b) => TOKEN_WEIGHTS[a] > TOKEN_WEIGHTS[b] ? a : b);
-  const domColor = TOKEN_COLORS[dominant];
+function applyAirStyles(pressure, clarity, movement, domColor) {
+  const root = document.documentElement.style;
+  root.setProperty('--air-pressure', pressure.toFixed(3));
+  root.setProperty('--air-clarity', clarity.toFixed(3));
+  const airSpeed = movement === 'TURBULENT' ? '0.5s' : movement === 'GUST' ? '1.2s' : movement === 'STILL' ? '8s' : '2.4s';
+  root.setProperty('--air-speed', airSpeed);
+  root.setProperty('--air-glow', (8 + pressure * 24).toFixed(1) + 'px');
+  root.setProperty('--dynamic-bg', `color-mix(in srgb, var(--bg) ${100 - Math.round(pressure * 15)}%, ${domColor})`);
+  root.setProperty('--dynamic-surface', `color-mix(in srgb, var(--surface) ${100 - Math.round(clarity * 20)}%, ${domColor})`);
+}
 
-  // Gate state
-  const hasGateOn = activeTokens.has('gate-on');
-  const hasGateOff = activeTokens.has('gate-off');
-  const gateState = hasGateOff && !hasGateOn ? 'UNARMED' : (hasGateOn ? 'ARMED' : 'N/A');
-  const gateColor = gateState === 'ARMED' ? TOKEN_COLORS['gate-on'] : (gateState === 'UNARMED' ? TOKEN_COLORS['gate-off'] : '#606080');
+function renderOutputPanel(dominant, domColor, gate, isAnomaly, boundary, movement, searchResult, strength) {
+  const movColor = (movement === 'TURBULENT' || movement === 'STILL') ? TOKEN_COLORS['anomaly'] : movement === 'GUST' ? TOKEN_COLORS['ambient'] : TOKEN_COLORS['transistor'];
+  const anchorColor = TOKEN_COLORS[SCENARIO_LIBRARY[searchResult.scenario].dominant_type.toLowerCase()] || 'var(--text)';
+  const firedColor = gate.firedValue === '1' ? TOKEN_COLORS['gate-on'] : gate.firedValue === '0' ? TOKEN_COLORS['anomaly'] : '#606080';
+  const set = (id, text, color) => { const el = document.getElementById(id); el.textContent = text; if (color !== undefined) el.style.color = color; };
+  set('out-type', TOKEN_LABELS[dominant], domColor);
+  set('out-gate', gate.gateState, gate.gateColor);
+  set('out-value', gate.firedValue, firedColor);
+  set('out-anomaly', isAnomaly ? 'TRUE' : 'FALSE', isAnomaly ? TOKEN_COLORS['anomaly'] : '#606080');
+  set('out-boundary', boundary.boundaryStatus, boundary.boundaryColor);
+  set('out-movement', movement, movColor);
+  set('out-anchor', searchResult.scenario, anchorColor);
+  set('out-strength', strength, domColor);
+  set('out-zone', currentZone.toUpperCase(), ZONE_COLORS[currentZone]);
+}
 
-  // Fired value
-  const firedValue = (hasGateOff && !hasGateOn) ? '0' : (activeTokens.has('transistor') ? '1' : '—');
-
-  // Boundary State (NOT logic)
-  const isNoTake = params.engagement_cost > 0 && params.service_value === 0;
-  const boundaryStatus = isNoTake ? 'NO-TAKE (NOT)' : 'OPEN';
-  const boundaryColor = isNoTake ? TOKEN_COLORS['anomaly'] : TOKEN_COLORS['decorated'];
-
-  // Anomaly
-  const inSilence = currentZone === 'silence';
-  const unarmedFire = activeTokens.has('transistor') && hasGateOff && !hasGateOn;
-  const isAnomaly = inSilence || unarmedFire || activeTokens.has('anomaly') || isNoTake;
-  const anomalyDrift = isAnomaly ? Math.max(params.drift, isNoTake ? 0.8 : 0.0) : 0; // Heavy penalty for NO-TAKE
-
-  // Signal strength
-  const zoneMultiplier = currentZone === 'buildup' ? params.intensity : currentZone === 'drop' ? 1.0 : 0.0;
-  const strength = Math.min(1, (totalWeight / Object.keys(TOKEN_WEIGHTS).length) * params.momentum * params.score * zoneMultiplier * STRENGTH_MULTIPLIER * (1 - anomalyDrift * 0.5)).toFixed(3);
-
-  // Air Element Logic (design.py parity)
-  const engagement = params.engagement_cost;
-  const service = params.service_value;
-  const clarity = engagement > 0 ? Math.min(1.0, service / engagement) : 1.0;
-  const pressure = Math.min(1.0, engagement);
-
-  let movement = "DRIFT";
-  if (pressure === 0.0) {
-    movement = "STILL";
-  } else if (clarity < 0.2) {
-    movement = "TURBULENT";
-  } else if (clarity < 0.6) {
-    movement = "GUST";
-  } else {
-    movement = "DRIFT";
-  }
-
-  // Transfiguration: Fingerprint & Semantic Search
-  const currentFingerprint = {
-    pressure: pressure,
-    clarity: clarity,
-    movement: movement,
-    dominant_type: dominant.toUpperCase(),
-    is_no_take: isNoTake
-  };
-  const searchResult = semanticSearch(currentFingerprint);
-
-  // DYNAMIC GESTURES (Air Matrix UI Mapping)
-  const rootStyle = document.documentElement.style;
-  rootStyle.setProperty('--air-pressure', pressure.toFixed(3));
-  rootStyle.setProperty('--air-clarity', clarity.toFixed(3));
-  
-  let airSpeed = '2.4s';
-  if (movement === 'TURBULENT') airSpeed = '0.5s';
-  else if (movement === 'GUST') airSpeed = '1.2s';
-  else if (movement === 'STILL') airSpeed = '8s';
-  rootStyle.setProperty('--air-speed', airSpeed);
-
-  const glowRadius = 8 + (pressure * 24); // 8px to 32px
-  rootStyle.setProperty('--air-glow', glowRadius.toFixed(1) + 'px');
-  
-  // Background breathing colors via color-mix
-  const pressPct = Math.round(pressure * 15); // up to 15% mix
-  const clrPct = Math.round(clarity * 20); // up to 20% mix
-  
-  // Mix baseline with dominant color
-  rootStyle.setProperty('--dynamic-bg', `color-mix(in srgb, var(--bg) ${100 - pressPct}%, ${domColor})`);
-  rootStyle.setProperty('--dynamic-surface', `color-mix(in srgb, var(--surface) ${100 - clrPct}%, ${domColor})`);
-
-  // Update outputs
-  document.getElementById('out-type').textContent = TOKEN_LABELS[dominant];
-  document.getElementById('out-type').style.color = domColor;
-  document.getElementById('out-gate').textContent = gateState;
-  document.getElementById('out-gate').style.color = gateColor;
-  document.getElementById('out-value').textContent = firedValue;
-  document.getElementById('out-value').style.color = firedValue === '1' ? TOKEN_COLORS['gate-on'] : (firedValue === '0' ? TOKEN_COLORS['anomaly'] : '#606080');
-  document.getElementById('out-anomaly').textContent = isAnomaly ? 'TRUE' : 'FALSE';
-  document.getElementById('out-anomaly').style.color = isAnomaly ? TOKEN_COLORS['anomaly'] : '#606080';
-  document.getElementById('out-boundary').textContent = boundaryStatus;
-  document.getElementById('out-boundary').style.color = boundaryColor;
-  document.getElementById('out-movement').textContent = movement;
-  document.getElementById('out-movement').style.color = (movement === 'TURBULENT' || movement === 'STILL') ? TOKEN_COLORS['anomaly'] : (movement === 'GUST' ? TOKEN_COLORS['ambient'] : TOKEN_COLORS['transistor']);
-  document.getElementById('out-anchor').textContent = searchResult.scenario;
-  document.getElementById('out-anchor').style.color = TOKEN_COLORS[SCENARIO_LIBRARY[searchResult.scenario].dominant_type.toLowerCase()] || 'var(--text)';
-  document.getElementById('out-strength').textContent = strength;
-  document.getElementById('out-strength').style.color = domColor;
-  document.getElementById('out-zone').textContent = currentZone.toUpperCase();
-  document.getElementById('out-zone').style.color = ZONE_COLORS[currentZone];
-
-  // Stats
-  document.getElementById('stat-active').textContent = types.length;
-  document.getElementById('stat-weight').textContent = totalWeight.toFixed(2);
-  document.getElementById('stat-combo').textContent = types.map(t => TOKEN_LABELS[t].split('·')[0].trim()).join('+');
-  document.getElementById('stat-cost').textContent = params.engagement_cost.toFixed(2);
-  document.getElementById('stat-service').textContent = params.service_value.toFixed(2);
-  const transformRate = (params.momentum * params.score * (1 - anomalyDrift)).toFixed(2);
-  document.getElementById('stat-rate').textContent = transformRate + '×';
-  document.getElementById('stat-rate').style.color = parseFloat(transformRate) > 0.7 ? TOKEN_COLORS['gate-on'] : (parseFloat(transformRate) > 0.4 ? TOKEN_COLORS['ambient'] : TOKEN_COLORS['anomaly']);
+function renderStatsPanel(types, totalWeight, transformRate, strength, isAnomaly, isNoTake, dominant) {
   const stability = parseFloat(strength) > 0.6 ? 'HIGH' : parseFloat(strength) > 0.3 ? 'MED' : 'LOW';
-  document.getElementById('stat-stability').textContent = stability;
-  document.getElementById('stat-stability').style.color = stability === 'HIGH' ? TOKEN_COLORS['decorated'] : stability === 'MED' ? TOKEN_COLORS['gate-on'] : TOKEN_COLORS['anomaly'];
-
-  // Bridge Metadata
+  const stabColor = stability === 'HIGH' ? TOKEN_COLORS['decorated'] : stability === 'MED' ? TOKEN_COLORS['gate-on'] : TOKEN_COLORS['anomaly'];
+  const rateColor = parseFloat(transformRate) > 0.7 ? TOKEN_COLORS['gate-on'] : parseFloat(transformRate) > 0.4 ? TOKEN_COLORS['ambient'] : TOKEN_COLORS['anomaly'];
   const isExpressive = ['transistor', 'decorated', 'ambient'].includes(dominant);
-  const faceRole = isExpressive ? 'QUEEN' : 'KING';
-  const voiceId = isExpressive ? 'queen-v1' : 'king-v1';
   const fidelity = (isAnomaly || isNoTake) ? 0.70 : 1.00;
+  const set = (id, text, color) => { const el = document.getElementById(id); el.textContent = text; if (color !== undefined) el.style.color = color; };
+  set('stat-active', types.length);
+  set('stat-weight', totalWeight.toFixed(2));
+  set('stat-combo', types.map(t => TOKEN_LABELS[t].split('·')[0].trim()).join('+'));
+  set('stat-cost', params.engagement_cost.toFixed(2));
+  set('stat-service', params.service_value.toFixed(2));
+  set('stat-rate', transformRate + '×', rateColor);
+  set('stat-stability', stability, stabColor);
+  set('stat-face', isExpressive ? 'QUEEN' : 'KING');
+  set('stat-voice', isExpressive ? 'queen-v1' : 'king-v1');
+  set('stat-fidelity', fidelity.toFixed(2), fidelity >= 0.8 ? TOKEN_COLORS['decorated'] : TOKEN_COLORS['anomaly']);
+}
 
-  document.getElementById('stat-face').textContent = faceRole;
-  document.getElementById('stat-voice').textContent = voiceId;
-  document.getElementById('stat-fidelity').textContent = fidelity.toFixed(2);
-  document.getElementById('stat-fidelity').style.color = fidelity >= 0.8 ? TOKEN_COLORS['decorated'] : TOKEN_COLORS['anomaly'];
-
-  // Barter
+function renderBarterPanel(dominant, domColor, transformRate, types) {
+  const otherTypes = types.filter(t => t !== dominant);
+  const target = otherTypes.length > 0 ? otherTypes.reduce((a, b) => TOKEN_WEIGHTS[a] > TOKEN_WEIGHTS[b] ? a : b) : null;
   document.getElementById('barter-from-amount').textContent = TOKEN_WEIGHTS[dominant].toFixed(2);
   document.getElementById('barter-from-amount').style.color = domColor;
   document.getElementById('barter-from-type').textContent = TOKEN_LABELS[dominant];
-
-  // Target selection: highest weight non-dominant
-  const otherTypes = types.filter(t => t !== dominant);
-  const barterTarget = otherTypes.length > 0 ? otherTypes.reduce((a, b) => TOKEN_WEIGHTS[a] > TOKEN_WEIGHTS[b] ? a : b) : null;
-  
-  if (barterTarget) {
-    const rate = (TOKEN_WEIGHTS[barterTarget] / TOKEN_WEIGHTS[dominant]) * parseFloat(transformRate);
+  if (target) {
+    const rate = (TOKEN_WEIGHTS[target] / TOKEN_WEIGHTS[dominant]) * parseFloat(transformRate);
     document.getElementById('barter-to-amount').textContent = rate.toFixed(3);
-    document.getElementById('barter-to-amount').style.color = TOKEN_COLORS[barterTarget];
-    document.getElementById('barter-to-type').textContent = TOKEN_LABELS[barterTarget];
-    document.getElementById('barter-rate').textContent =
-      `1 ${TOKEN_LABELS[dominant]} = ${rate.toFixed(3)} ${TOKEN_LABELS[barterTarget]}  ·  rate: ${transformRate}× at ${currentZone.toUpperCase()}`;
+    document.getElementById('barter-to-amount').style.color = TOKEN_COLORS[target];
+    document.getElementById('barter-to-type').textContent = TOKEN_LABELS[target];
+    document.getElementById('barter-rate').textContent = `1 ${TOKEN_LABELS[dominant]} = ${rate.toFixed(3)} ${TOKEN_LABELS[target]}  ·  rate: ${transformRate}× at ${currentZone.toUpperCase()}`;
   } else {
     document.getElementById('barter-to-amount').textContent = '—';
     document.getElementById('barter-to-amount').style.color = '#606080';
     document.getElementById('barter-to-type').textContent = 'SELECT TARGET';
     document.getElementById('barter-rate').textContent = 'Activate a second token type to compute exchange rate';
   }
-
-  // Interaction matrix
-  const matrixReport = renderMatrix(transformRate);
-  updateMatrixLighting(matrixReport);
 }
 
+// ── Matrix ──
 function renderMatrix(rate) {
   const types = ['transistor', 'decorated', 'ambient', 'anomaly', 'gate-on'];
   const labels = ['TRN', 'DEC', 'AMB', 'ANM', 'GTE'];
   const weakThreshold = 0.24;
-  let weakCells = 0;
-  let totalCells = 0;
+  let weakCells = 0, totalCells = 0;
   let strongest = { row: 0, col: 0, combined: 0 };
-  let html = '<div class="matrix">';
-  html += '<div class="matrix-header"></div>';
+  let html = '<div class="matrix"><div class="matrix-header"></div>';
   labels.forEach(l => { html += `<div class="matrix-header">${l}</div>`; });
   types.forEach((ta, i) => {
     html += `<div class="matrix-header" style="color:${TOKEN_COLORS[ta]}">${labels[i]}</div>`;
     types.forEach((tb, j) => {
       const wa = TOKEN_WEIGHTS[ta], wb = TOKEN_WEIGHTS[tb];
-      const combined = Math.min(1, (wa * wb) * parseFloat(rate) * params.intensity);
-      totalCells += 1;
-      if (combined < weakThreshold) weakCells += 1;
+      const combined = Math.min(1, wa * wb * parseFloat(rate) * params.intensity);
+      totalCells++;
+      if (combined < weakThreshold) weakCells++;
       if (combined > strongest.combined) strongest = { row: i, col: j, combined };
       const alpha = Math.max(0.08, combined);
-      const activeA = activeTokens.has(ta), activeB = activeTokens.has(tb);
-      const highlight = activeA && activeB;
+      const highlight = activeTokens.has(ta) && activeTokens.has(tb);
       const bg = `color-mix(in srgb, ${TOKEN_COLORS[ta]} ${Math.round(alpha*60)}%, ${TOKEN_COLORS[tb]} ${Math.round(alpha*40)}%)`;
       html += `<div class="matrix-cell" style="background:${bg};opacity:${highlight ? 1 : 0.35};border:1px solid ${highlight ? TOKEN_COLORS[ta] : 'transparent'}" title="${labels[i]}×${labels[j]}: ${combined.toFixed(2)}">${combined > 0.4 ? combined.toFixed(1) : ''}</div>`;
     });
   });
   html += '</div>';
   document.getElementById('matrixContainer').innerHTML = html;
-
   const weakRatio = totalCells > 0 ? weakCells / totalCells : 0;
-  const spotlight = {
-    x: ((strongest.col + 1.5) / (types.length + 1)) * 100,
-    y: ((strongest.row + 1.5) / (types.length + 1)) * 100,
+  return {
+    weakRatio,
+    strongest: strongest.combined,
+    spotlight: { x: ((strongest.col + 1.5) / (types.length + 1)) * 100, y: ((strongest.row + 1.5) / (types.length + 1)) * 100 },
   };
-
-  return { weakRatio, strongest: strongest.combined, spotlight };
 }
 
 function updateMatrixLighting(report) {
   const stage = document.getElementById('matrixStage');
   const insight = document.getElementById('matrixInsight');
   if (!stage || !insight) return;
-
   const curtainOpacity = Math.max(0.12, Math.min(0.58, report.weakRatio * 0.72));
   stage.style.setProperty('--curtain-opacity', curtainOpacity.toFixed(2));
   stage.style.setProperty('--spot-x', `${report.spotlight.x.toFixed(1)}%`);
   stage.style.setProperty('--spot-y', `${report.spotlight.y.toFixed(1)}%`);
-
   insight.textContent = `● READY · Weak scan ${Math.round(report.weakRatio * 100)}% masked · strongest lane ${report.strongest.toFixed(2)}`;
 }
 
-// Init
+// ── Orchestrator ──
+function compute() {
+  const types = Array.from(activeTokens);
+  const totalWeight = types.reduce((s, t) => s + TOKEN_WEIGHTS[t], 0);
+
+  currentZone = deriveZone(params.step);
+  syncZoneUI(currentZone);
+  renderCompositeBar(types, totalWeight);
+
+  const dominant = types.reduce((a, b) => TOKEN_WEIGHTS[a] > TOKEN_WEIGHTS[b] ? a : b);
+  const domColor = TOKEN_COLORS[dominant];
+  const gate = deriveGate();
+  const boundary = deriveBoundary();
+  const { isAnomaly, anomalyDrift } = deriveAnomaly(boundary.isNoTake, gate.gateState);
+  const strength = deriveStrength(totalWeight, anomalyDrift);
+  const { pressure, clarity, movement } = deriveAirElement();
+  const fingerprint = { pressure, clarity, movement, dominant_type: dominant.toUpperCase(), is_no_take: boundary.isNoTake };
+  const searchResult = semanticSearch(fingerprint);
+  const transformRate = (params.momentum * params.score * (1 - anomalyDrift)).toFixed(2);
+
+  applyAirStyles(pressure, clarity, movement, domColor);
+  renderOutputPanel(dominant, domColor, gate, isAnomaly, boundary, movement, searchResult, strength);
+  renderStatsPanel(types, totalWeight, transformRate, strength, isAnomaly, boundary.isNoTake, dominant);
+  renderBarterPanel(dominant, domColor, transformRate, types);
+  updateMatrixLighting(renderMatrix(transformRate));
+}
+
+// ── Init ──
+buildTokenGrid();
 compute();
 </script>
 </body>
