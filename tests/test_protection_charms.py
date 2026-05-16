@@ -29,25 +29,25 @@ def test_protego_and_freedom_signal_in_color_registry():
 # ── check_freedom_signal gate function ───────────────────────────────────────
 
 def test_freedom_signal_fires_with_token_and_engagement():
-    exchange = Exchange(attention_cost=0.9, received_clarity=0.0)
+    exchange = Exchange(engagement_cost=0.9, service_value=0.0)
     assert check_freedom_signal({"freedom-signal", "transistor"}, exchange) is True
 
 
 def test_freedom_signal_requires_engagement_threshold():
     """Engagement below 0.8 must NOT trigger freedom override."""
-    exchange = Exchange(attention_cost=0.5, received_clarity=0.0)
+    exchange = Exchange(engagement_cost=0.5, service_value=0.0)
     assert check_freedom_signal({"freedom-signal"}, exchange) is False
 
 
 def test_freedom_signal_requires_token_present():
     """Without freedom-signal token the gate must not fire."""
-    exchange = Exchange(attention_cost=1.0, received_clarity=0.0)
+    exchange = Exchange(engagement_cost=1.0, service_value=0.0)
     assert check_freedom_signal({"transistor", "bio-signal"}, exchange) is False
 
 
 def test_freedom_signal_engagement_exactly_at_threshold():
     """Exactly 0.8 engagement must trigger (>= not >)."""
-    exchange = Exchange(attention_cost=0.8, received_clarity=0.0)
+    exchange = Exchange(engagement_cost=0.8, service_value=0.0)
     assert check_freedom_signal({"freedom-signal"}, exchange) is True
 
 

@@ -5,7 +5,7 @@ from typing import Any, Literal
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from calculator import TOKEN_WEIGHTS, TokenTypeCalculator
 from contracts import OperatorState
@@ -37,7 +37,6 @@ class ComputeRequest(BaseModel):
 
 
 class VisualStateModel(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
     face: dict[str, Any]
     air: dict[str, Any]
 

@@ -179,9 +179,9 @@ class Wikidex:
         return audio
 
     def verify_strata_sync(self):
-        claude_md_path = "/home/irfankabir/CLAUDE.md"
+        claude_md_path = os.environ.get("CLAUDE_MD_PATH", os.path.expanduser("~/CLAUDE.md"))
         if not os.path.exists(claude_md_path):
-            self.console.print("[red]Error: /home/irfankabir/CLAUDE.md not found.[/]")
+            self.console.print(f"[red]Error: {claude_md_path} not found.[/]")
             return False
 
         with open(claude_md_path) as f:

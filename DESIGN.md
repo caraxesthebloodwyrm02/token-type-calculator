@@ -487,8 +487,7 @@ The Dark Mark is a module-level gate function — never embedded in token weight
 
 **`is_dark_mark_cast(exchange, bond_dynamics) -> bool`**
 - Fires when: `engagement_cost >= 1.0 AND service_value == 0.0 AND bond_dynamics == "corrupted"`
-- `engagement_cost = attention_cost + money_cost + body_cost`
-- `service_value = received_function + received_relief + received_clarity`
+- `Exchange` carries two fields: `engagement_cost` and `service_value`
 
 **`check_dark_mark(exchange, bond_dynamics) -> DarkMark | None`**
 - Returns a `DarkMark(shape="serpent_skull", engagement=1.0, service=0.0)` when `is_dark_mark_cast` is True

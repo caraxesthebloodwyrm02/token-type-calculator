@@ -57,18 +57,12 @@ BoundaryResult = Literal[
 
 @dataclass
 class Exchange:
-    attention_cost: float = 0.0
-    money_cost: float = 0.0
-    body_cost: float = 0.0
-    received_function: float = 0.0
-    received_relief: float = 0.0
-    received_clarity: float = 0.0
+    engagement_cost: float = 0.0
+    service_value: float = 0.0
 
 
 def should_reject(exchange: Exchange) -> bool:
-    engagement_cost = exchange.attention_cost + exchange.money_cost + exchange.body_cost
-    service_value = exchange.received_function + exchange.received_relief + exchange.received_clarity
-    return engagement_cost > 0 and service_value == 0
+    return exchange.engagement_cost > 0 and exchange.service_value == 0
 
 
 def is_dark_mark_cast(exchange: Exchange, bond_dynamics: str) -> bool:
@@ -79,9 +73,7 @@ def is_dark_mark_cast(exchange: Exchange, bond_dynamics: str) -> bool:
     Structurally parallel to should_reject but requires bond_dynamics == "corrupted"
     to distinguish Death Eater obedience from ordinary NO-TAKE.
     """
-    engagement = exchange.attention_cost + exchange.money_cost + exchange.body_cost
-    service = exchange.received_function + exchange.received_relief + exchange.received_clarity
-    return engagement >= 1.0 and service == 0.0 and bond_dynamics == "corrupted"
+    return exchange.engagement_cost >= 1.0 and exchange.service_value == 0.0 and bond_dynamics == "corrupted"
 
 
 
@@ -256,10 +248,8 @@ AIR = AirElement(
 
 
 def air_from_exchange(exchange: Exchange) -> AirElement:
-    engagement = exchange.attention_cost + exchange.money_cost + exchange.body_cost
-    service = exchange.received_function + exchange.received_relief + exchange.received_clarity
-    clarity = min(1.0, service / engagement) if engagement > 0 else 1.0
-    pressure = min(1.0, engagement)
+    clarity = min(1.0, exchange.service_value / exchange.engagement_cost) if exchange.engagement_cost > 0 else 1.0
+    pressure = min(1.0, exchange.engagement_cost)
     if pressure == 0.0:
         movement: Literal["still", "drift", "gust", "turbulent"] = "still"
     elif clarity < 0.2:

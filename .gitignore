@@ -28,24 +28,27 @@ yarn-debug.log*
 yarn-error.log*
 
 # SQLite trajectory (local dev)
-token_calc.db
+*.db
 
 # Local environment
 .env
 .env.*
 !.env.example
 
-# Release artifacts (not committed — git tag is the release)
-dist/
-*.zip
-*.tar.gz
+# Claude Code project settings
+.claude/
 
-# Session notes, assistant dumps, and scratch exports (not product)
+# Session scratch
 .claude-progress.md
 *command-message*.txt
 context_day4_exit.yaml
 context_day4_exit_nl.md
 tui.txt
+
+# Release artifacts
+dist/
+*.zip
+*.tar.gz
 
 # Narrative / experiment artifacts kept out of the main tree
 docs/lore/AZKABAN.html

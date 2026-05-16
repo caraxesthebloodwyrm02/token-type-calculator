@@ -18,12 +18,12 @@ def test_patronus_and_dark_mark_cannot_coexist():
     The same exchange cannot satisfy both conditions simultaneously.
     """
     full_service_exchange = Exchange(
-        attention_cost=1.0,
-        received_clarity=1.0
+        engagement_cost=1.0,
+        service_value=1.0
     )
     full_take_exchange = Exchange(
-        attention_cost=1.0,
-        received_clarity=0.0
+        engagement_cost=1.0,
+        service_value=0.0
     )
     anchor = BondMemory(content="anchor", bond_dynamics="static")
 

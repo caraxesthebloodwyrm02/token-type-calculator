@@ -77,15 +77,14 @@ def generate_marauders_map() -> str:
     output.append("-" * 30)
     output.append("HALF-BLOOD PRINCE:")
     bar = "█" * int(ssserverus_score * 10) + "░" * (10 - int(ssserverus_score * 10))
-    fp = current_fp
-    inherited_gap = abs(fp.clarity - 1.0)
+    inherited_gap = abs(current_fp.clarity - 1.0)
     output.append(f"  SSSEVERUS [{bar}] {ssserverus_score:.4f}")
     output.append(f"  clarity_gap: {inherited_gap:.4f} (anchor: {'inherited' if inherited_gap >= SSSEVERUS_CLARITY_GAP else 'own'})")
     output.append("-" * 30)
     output.append("THE ANCHOR:")
     bar = "█" * int(lily_score * 10) + "░" * (10 - int(lily_score * 10))
     output.append(f"  LILY      [{bar}] {lily_score:.4f}")
-    output.append("  (orgin point — the settled memory)")
+    output.append("  (origin point — the settled memory)")
     output.append("-" * 30)
     output.append("ORDER OF THE PHOENIX:")
     for m in ["DUMBLEDORE", "MOONY", "TONKS", "PRONGS", "PADFOOT", "SSSEVERUS", "LILY", "MOODY"]:

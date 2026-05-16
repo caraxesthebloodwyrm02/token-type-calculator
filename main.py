@@ -5,7 +5,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
-from calculator import TokenTypeCalculator, draw_dashboard, run_tui_queries
+from calculator import TokenTypeCalculator
+from dashboard import draw_dashboard, run_tui_queries
 from scenarios import (
     run_moony_scenario,
     run_not_scenario,

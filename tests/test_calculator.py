@@ -1,4 +1,5 @@
-from calculator import TokenTypeCalculator, query_tui_anchor, run_tui_queries
+from calculator import TokenTypeCalculator
+from dashboard import query_tui_anchor, run_tui_queries
 
 
 def test_initial_state():
