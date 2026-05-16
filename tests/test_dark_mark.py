@@ -1,7 +1,13 @@
 """Tests for the Dark Mark system: is_dark_mark_cast, check_dark_mark,
 check_imperius_compromise, and the DarkMark dataclass.
+
+Integration coverage (compute() path):
+- Full trigger: imperius + gate-on + (1.0, 0.0) → dark_mark_state populated
+- Bond guard: no imperius → bond stays static → dark_mark_state is None
+- Compromise requires gate-on: imperius alone → no compromise → dark_mark_state is None
+- gate_color is TOKEN_COLORS["imperius"] when COMPROMISED
 """
-from calculator import TOKEN_COLORS, TOKEN_WEIGHTS, check_dark_mark, check_imperius_compromise
+from calculator import TOKEN_COLORS, TOKEN_WEIGHTS, TokenTypeCalculator, check_dark_mark, check_imperius_compromise
 from design import DarkMark, Exchange, is_dark_mark_cast
 
 # ── is_dark_mark_cast ─────────────────────────────────────────────────────────
@@ -94,3 +100,57 @@ def test_morsmordre_weight_below_transistor():
     """morsmordre is the highest dark token but clean carrier (transistor) still wins."""
     assert TOKEN_WEIGHTS["morsmordre"] < TOKEN_WEIGHTS["transistor"]
     assert TOKEN_WEIGHTS["morsmordre"] > TOKEN_WEIGHTS["gate-on"]
+
+
+# ── compute() integration — full Dark Mark path ───────────────────────────────
+
+def _calc_at(tokens: set, engagement: float, service: float) -> dict:
+    calc = TokenTypeCalculator()
+    calc.active_tokens = tokens
+    calc.params["engagement_cost"] = engagement
+    calc.params["service_value"] = service
+    return calc.compute()
+
+
+def test_compute_dark_mark_fires_with_imperius_gate_on_full_take():
+    """imperius + gate-on + (1.0, 0.0) is the only path that sets bond_dynamics=corrupted
+    inside compute(), so dark_mark_state must be non-None with all correct fields.
+    """
+    result = _calc_at({"transistor", "gate-on", "imperius"}, 1.0, 0.0)
+    dms = result["dark_mark_state"]
+    assert dms is not None
+    assert dms["shape"] == "serpent_skull"
+    assert dms["engagement"] == 1.0
+    assert dms["service"] == 0.0
+    assert dms["is_no_take"] is True
+    assert dms["bond_dynamics"] == "corrupted"
+
+
+def test_compute_dark_mark_none_without_imperius():
+    """Without imperius, compute() keeps bond_dynamics='static' even at (1.0, 0.0).
+    Dark Mark must not fire — the static bond is the guard.
+    """
+    result = _calc_at({"transistor", "gate-on"}, 1.0, 0.0)
+    assert result["dark_mark_state"] is None
+
+
+def test_compute_dark_mark_none_when_imperius_without_gate_on():
+    """imperius alone does not trigger check_imperius_compromise (gate-on is required),
+    so bond_dynamics stays 'static' and dark_mark_state must be None.
+    """
+    result = _calc_at({"transistor", "imperius"}, 1.0, 0.0)
+    assert result["gate_state"] != "COMPROMISED"
+    assert result["dark_mark_state"] is None
+
+
+def test_compute_dark_mark_none_when_service_returned():
+    """Even with imperius + gate-on, any service_value > 0 prevents the Dark Mark."""
+    result = _calc_at({"transistor", "gate-on", "imperius"}, 1.0, 0.5)
+    assert result["dark_mark_state"] is None
+
+
+def test_compute_gate_color_is_imperius_color_when_compromised():
+    """gate_color must be TOKEN_COLORS['imperius'] when the gate state is COMPROMISED."""
+    result = _calc_at({"transistor", "gate-on", "imperius"}, 0.5, 0.5)
+    assert result["gate_state"] == "COMPROMISED"
+    assert result["gate_color"] == TOKEN_COLORS["imperius"]
