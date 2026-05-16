@@ -120,13 +120,10 @@ class TokenTypeCalculator:
         A "no-take" event is considered a severe anomaly and incurs a heavy, fixed penalty.
         """
         if is_no_take:
-            # A "no-take" is a critical failure of exchange, imposing a high, non-negotiable drift.
             return NO_TAKE_DRIFT_PENALTY
         elif is_anomaly:
-            # A standard anomaly introduces drift based on the current system parameters.
             return self.params.get('drift', 0.0)
         else:
-            # No anomaly, no drift.
             return 0.0
 
     def semantic_search(self, target: Fingerprint) -> dict[str, Any]:
@@ -238,10 +235,11 @@ class TokenTypeCalculator:
             gate_color = '#606080'
 
         # Imperius compromise — gate is armed but under enemy control
-        if check_imperius_compromise(self.active_tokens):
+        imperius_compromised = check_imperius_compromise(self.active_tokens)
+        if imperius_compromised:
             gate_state = 'COMPROMISED'
             gate_color = TOKEN_COLORS['imperius']
-            
+
         # Fired Value
         if has_gate_off and not has_gate_on:
             fired_val = '0'
@@ -274,7 +272,7 @@ class TokenTypeCalculator:
         # DARK MARK detection — parallel to Patronus cast, corrupted polarity
         # bond_dynamics defaults to "static" here; callers may supply "corrupted"
         # by passing bond_dynamics via params. We derive it from imperius state as a proxy.
-        _bond_dynamics = "corrupted" if check_imperius_compromise(self.active_tokens) else "static"
+        _bond_dynamics = "corrupted" if imperius_compromised else "static"
         dark_mark_state = None
         mark = check_dark_mark(exchange_obj, _bond_dynamics)
         if mark:
@@ -298,7 +296,7 @@ class TokenTypeCalculator:
         svc = self.params['service_value']
         if eng >= 1.0 and svc >= 1.0:
             form = expecto_patronum(
-                Exchange(engagement_cost=eng, service_value=svc),
+                exchange_obj,
                 BondMemory(content="anchor", bond_dynamics="static")
             )
             if form:

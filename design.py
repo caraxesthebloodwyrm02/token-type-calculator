@@ -276,16 +276,16 @@ def air_from_exchange(exchange: Exchange) -> AirElement:
 FIDELITY_FLOOR = 0.8
 
 # Similarity
-SIMILARITY_MATCH_THRESHOLD = 0.90   # calculator.py:249 — is_match in ComparisonReport
+SIMILARITY_MATCH_THRESHOLD = 0.90
 
 # Marauder map
-MOONY_SCORE_THRESHOLD = 0.8          # marauders_map.py:63, api.py:164
-TONKS_SCORE_THRESHOLD = 0.8           # api.py:164
-PRONGS_ACCOMPANIMENT_FLOOR = 0.15     # marauders_map.py:63 — PRONGS must clear for accompaniment
-PRONGS_PRESENCE_THRESHOLD = 0.7        # api.py:150 — prongs_present annotation
+MOONY_SCORE_THRESHOLD = 0.8
+TONKS_SCORE_THRESHOLD = 0.8
+PRONGS_ACCOMPANIMENT_FLOOR = 0.15
+PRONGS_PRESENCE_THRESHOLD = 0.7
 
 # Anomaly drift
-NO_TAKE_DRIFT_PENALTY = 0.8            # calculator.py:172 — fixed drift for no-take events
+NO_TAKE_DRIFT_PENALTY = 0.8
 
 # SSSEVERUS — Half-Blood Prince
 SSSEVERUS_CLARITY_GAP = 0.5            # distance between Snape's doe (0.5) and the perfect cast (1.0)

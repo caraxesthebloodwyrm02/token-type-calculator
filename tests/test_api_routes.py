@@ -4,9 +4,6 @@ Same pattern as test_api_contract.py: call the FastAPI handler directly,
 stub save_request to avoid touching SQLite.
 """
 
-import pytest
-
-import api as api_module
 from api import (
     CompareRequest,
     ComputeRequest,
@@ -14,11 +11,6 @@ from api import (
     moony_scenario,
     search,
 )
-
-
-@pytest.fixture(autouse=True)
-def stub_save_request(monkeypatch):
-    monkeypatch.setattr(api_module, "save_request", lambda *args, **kwargs: 1)
 
 
 class TestCompare:

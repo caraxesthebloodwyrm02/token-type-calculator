@@ -10,11 +10,6 @@ import api as api_module
 from api import ComputeRequest, compute
 
 
-@pytest.fixture(autouse=True)
-def stub_save_request(monkeypatch):
-    monkeypatch.setattr(api_module, "save_request", lambda *args, **kwargs: 1)
-
-
 def test_compute_zone_silence_authoritative():
     """Request zone wins over default params['step'] (buildup range)."""
     result = compute(

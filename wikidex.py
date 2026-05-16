@@ -85,37 +85,32 @@ class Wikidex:
                 path=path
             ))
         else:
-            for root, dirs, files in os.walk(path):
-                # Only top level for now or specific depth?
-                # Let's do top level for habitat view
-                for d in dirs:
-                    if d.startswith('.') or d == "__pycache__":
+            with os.scandir(path) as it:
+                for entry in it:
+                    if entry.name.startswith('.') or entry.name == "__pycache__":
                         continue
-                    self.entries.append(WikidexEntry(
-                        id=str(idx).zfill(3),
-                        name=d,
-                        category=self.categorize(d, True),
-                        entry_type="habitat",
-                        weight=0.0,
-                        summary="A digital habitat containing multiple sub-elements.",
-                        path=os.path.join(root, d)
-                    ))
-                    idx += 1
-                for f in files:
-                    if f.startswith('.') or f.endswith('.pyc'):
-                        continue
-                    fpath = os.path.join(root, f)
-                    self.entries.append(WikidexEntry(
-                        id=str(idx).zfill(3),
-                        name=f,
-                        category=self.categorize(f, False),
-                        entry_type="specimen",
-                        weight=round(os.path.getsize(fpath) / 1024, 2),
-                        summary="A digital specimen found within the habitat.",
-                        path=fpath
-                    ))
-                    idx += 1
-                break # Only top level for habitat scan
+                    if entry.is_dir():
+                        self.entries.append(WikidexEntry(
+                            id=str(idx).zfill(3),
+                            name=entry.name,
+                            category=self.categorize(entry.name, True),
+                            entry_type="habitat",
+                            weight=0.0,
+                            summary="A digital habitat containing multiple sub-elements.",
+                            path=entry.path
+                        ))
+                        idx += 1
+                    elif not entry.name.endswith('.pyc'):
+                        self.entries.append(WikidexEntry(
+                            id=str(idx).zfill(3),
+                            name=entry.name,
+                            category=self.categorize(entry.name, False),
+                            entry_type="specimen",
+                            weight=round(entry.stat().st_size / 1024, 2),
+                            summary="A digital specimen found within the habitat.",
+                            path=entry.path
+                        ))
+                        idx += 1
 
     def specify(self, entry_id: str):
         entry = next((e for e in self.entries if e.id == entry_id), None)
