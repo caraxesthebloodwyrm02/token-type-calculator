@@ -1,6 +1,8 @@
 """Tests for generate_marauders_map() with stubbed trajectory data."""
 
 import marauders_map as mm_module
+from calculator import SCENARIO_LIBRARY, TokenTypeCalculator
+from design import Fingerprint
 from marauders_map import generate_marauders_map
 
 
@@ -72,7 +74,28 @@ def test_new_characters_section(monkeypatch):
 
 
 def test_sirius_duality_annotation(monkeypatch):
+    """SIRIUS duality line must contain the correct computed scores and their delta.
+
+    Derives expected values using the same similarity path as generate_marauders_map()
+    so a swap, wiring error, or delta arithmetic bug will cause a mismatch.
+    """
     monkeypatch.setattr(mm_module, "read_trajectory", lambda limit=10: _fake_trajectory())
+
+    latest = _fake_trajectory()[-1]
+    current_fp = Fingerprint(
+        pressure=latest["air_pressure"],
+        clarity=latest["air_clarity"],
+        movement=latest["air_movement"],
+        dominant_type=latest["dominant"].upper(),
+        is_no_take=bool(latest["is_no_take"]),
+    )
+    calc = TokenTypeCalculator()
+    sirius_score = calc.calculate_similarity(current_fp, SCENARIO_LIBRARY["SIRIUS_BLACK"]).similarity
+    padfoot_score = calc.calculate_similarity(current_fp, SCENARIO_LIBRARY["PADFOOT"]).similarity
+    expected_delta = abs(sirius_score - padfoot_score)
+
     result = generate_marauders_map()
-    assert "SIRIUS duality:" in result
-    assert "PADFOOT=" in result
+
+    assert f"SIRIUS_BLACK={sirius_score:.4f}" in result
+    assert f"PADFOOT={padfoot_score:.4f}" in result
+    assert f"delta={expected_delta:.4f}" in result
